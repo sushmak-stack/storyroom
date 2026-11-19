@@ -108,6 +108,20 @@ pre.prompt{white-space:pre-wrap;font:12px/1.5 var(--mono);background:#0f1114;bor
 .qc{display:inline-block;font:600 10px var(--mono);letter-spacing:.06em;color:#1b1112;background:var(--gold);border-radius:3px;padding:1px 5px}
 .clip .qc{position:absolute;bottom:4px;right:5px}
 .warn{color:var(--gold)}
+.grp{border-top:1px solid var(--line);margin-top:6px}
+.grp>summary{list-style:none;cursor:pointer;padding:12px 0 6px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:baseline;user-select:none}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary::before{content:"▸";color:var(--gold);margin-right:8px;transition:transform .15s;display:inline-block}
+.grp[open]>summary::before{transform:rotate(90deg)}
+.grp>summary .t{flex:1}.grp>summary span.n{font-weight:400;color:var(--muted);font-size:11.5px}
+.grp>.body{padding:0 0 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid2 .lbl{margin-top:8px}
+.castcard{border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:8px;background:#1f1314}
+.castcard .top{display:flex;gap:8px;align-items:flex-start}
+.castcard .pic{width:64px;height:80px;flex:none;border-radius:8px;border:1px dashed var(--line);background:#1b1112 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--muted);text-align:center;cursor:pointer}
+.castcard .mno{font:600 10px var(--mono);background:#8fa6d8;color:#1b1112;border-radius:3px;padding:0 5px}
+.castcard .col{flex:1;display:flex;flex-direction:column;gap:6px}
+.castcard .hd{display:flex;justify-content:space-between;align-items:center}
 .drop{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px;cursor:pointer;margin-top:8px;transition:.15s}
 .drop:hover,.drop.over{border-color:var(--gold);color:var(--text);background:#2a1b1c}
 .drop b{color:var(--gold)}
@@ -207,7 +221,7 @@ function grtTemplate(product){const P=product||"Gold";const hero={"Gold":"gold n
  {action:`Occasion moment: family or festive setting, the ${hero} catches the light as she turns.`,vo:"",size:"Medium",angle:"Eye level",move:"Orbit",lens:35,duration:6},
  {action:`End frame: ${hero} hero on cream with GRT logo and super in the copy space.`,vo:"GRT Jewellers. (super to be written)",size:"Close-up",angle:"Eye level",move:"Static",lens:85,duration:4}
 ].map(normShot)}
-const S={locs:[],products:[],db:null,sample:null,projects:null,pid:null,project:null,shots:[],shotsLoaded:false,sel:null,unsub:[],pending:{},projPending:false,guides:true,overlay:true,busy:{},dragId:null};
+const S={cast:[],grp:{film:true,script:true,cast:true,prods:true,locs:true,look:true},igrp:{script:true,camera:true,cont:true,frame:true},locs:[],products:[],db:null,sample:null,projects:null,pid:null,project:null,shots:[],shotsLoaded:false,sel:null,unsub:[],pending:{},projPending:false,guides:true,overlay:true,busy:{},dragId:null};
 let Store=null;
 
 /* ---------- helpers ---------- */
@@ -249,6 +263,9 @@ const DBStore={
   putProject(pid,o){return queued("projects/"+pid,()=>S.db.doc("projects/"+pid).set(strip(o)))},
   putShot(pid,sid,o){const p="projects/"+pid+"/shots/"+sid;return queued(p,()=>S.db.doc(p).set(strip(o)))},
   delShot(pid,sid){const p="projects/"+pid+"/shots/"+sid;return queued(p,()=>S.db.doc(p).delete())},
+  subCast(pid,cb,err){return S.db.collection("projects/"+pid+"/cast").orderBy("no").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data()))),err)},
+  putCast(pid,id,o){const p="projects/"+pid+"/cast/"+id;return queued(p,()=>S.db.doc(p).set(strip(o)))},
+  delCast(pid,id){const p="projects/"+pid+"/cast/"+id;return queued(p,()=>S.db.doc(p).delete())},
   subLocs(pid,cb,err){return S.db.collection("projects/"+pid+"/locations").orderBy("no").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data()))),err)},
   putLoc(pid,id,o){const p="projects/"+pid+"/locations/"+id;return queued(p,()=>S.db.doc(p).set(strip(o)))},
   delLoc(pid,id){const p="projects/"+pid+"/locations/"+id;return queued(p,()=>S.db.doc(p).delete())},
@@ -266,14 +283,17 @@ const LocalStore=(function(){
   const persist=()=>{try{localStorage.setItem("storyroom-grt-v1",JSON.stringify(d))}catch(e){toast("This browser couldn't save. Storage may be full.")}subs.forEach(f=>f())};
   const sub=f=>{subs.add(f);setTimeout(f,0);return()=>subs.delete(f)};
   const meta={fromCache:false};
-  const noShots=p=>{const c=Object.assign({},p);delete c.shots;delete c.refs;delete c.products;delete c.locs;return c};
+  const noShots=p=>{const c=Object.assign({},p);delete c.shots;delete c.refs;delete c.products;delete c.locs;delete c.castm;return c};
   return{
     subProjects(cb){return sub(()=>cb(Object.keys(d.projects).map(id=>Object.assign({id},noShots(d.projects[id]))).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)),meta))},
     subProject(pid,cb){return sub(()=>{const p=d.projects[pid];cb(p?Object.assign({id:pid},noShots(p)):null,meta)})},
     subShots(pid,cb){return sub(()=>{const p=d.projects[pid];const sh=p&&p.shots?p.shots:{};cb(Object.keys(sh).map(id=>Object.assign({id},sh[id])).sort((a,b)=>a.order-b.order),meta)})},
-    async putProject(pid,o){const prev=d.projects[pid]||{};d.projects[pid]=Object.assign(strip(o),{shots:prev.shots||{},refs:prev.refs||{},products:prev.products||{},locs:prev.locs||{}});persist();return true},
+    async putProject(pid,o){const prev=d.projects[pid]||{};d.projects[pid]=Object.assign(strip(o),{shots:prev.shots||{},refs:prev.refs||{},products:prev.products||{},locs:prev.locs||{},castm:prev.castm||{}});persist();return true},
     async putShot(pid,sid,o){const p=d.projects[pid];if(!p)return false;p.shots=p.shots||{};p.shots[sid]=strip(o);persist();return true},
     async delShot(pid,sid){const p=d.projects[pid];if(p&&p.shots)delete p.shots[sid];persist();return true},
+    subCast(pid,cb){return sub(()=>{const p=d.projects[pid];const pr=p&&p.castm?p.castm:{};cb(Object.keys(pr).map(id=>Object.assign({id},pr[id])).sort((a,b)=>a.no-b.no))})},
+    async putCast(pid,id,o){const p=d.projects[pid];if(!p)return false;p.castm=p.castm||{};p.castm[id]=strip(o);persist();return true},
+    async delCast(pid,id){const p=d.projects[pid];if(p&&p.castm)delete p.castm[id];persist();return true},
     subLocs(pid,cb){return sub(()=>{const p=d.projects[pid];const pr=p&&p.locs?p.locs:{};cb(Object.keys(pr).map(id=>Object.assign({id},pr[id])).sort((a,b)=>a.no-b.no))})},
     async putLoc(pid,id,o){const p=d.projects[pid];if(!p)return false;p.locs=p.locs||{};p.locs[id]=strip(o);persist();return true},
     async delLoc(pid,id){const p=d.projects[pid];if(p&&p.locs)delete p.locs[id];persist();return true},
@@ -338,7 +358,17 @@ function normShot(o){
   return{action:String(o.action||"").slice(0,800),vo:String(o.vo||"").slice(0,300),dlg:String(o.dlg||"").slice(0,1200),size:pick(o.size,SIZES,"Medium"),angle:pick(o.angle,ANGLES,"Eye level"),move:pick(o.move,MOVES,"Static"),lens,duration:dur};
 }
 const SPEC=`"size": one of ${JSON.stringify(SIZES)}, "angle": one of ${JSON.stringify(ANGLES)}, "move": one of ${JSON.stringify(MOVES)}, "lens": one of ${JSON.stringify(LENSES)}, "duration": seconds between 1 and 30`;
-function talent(){const p=S.project||{};if(!p.inflName&&!p.inflLook)return"";return `${p.inflName||"The influencer"}${p.inflLook?" ("+p.inflLook+")":""}`}
+function castById(id){return S.cast.find(x=>x.id===id)}
+function mLabel(m){return `Model ${m.no}${m.name?" ("+m.name+")":""}`}
+function castOf(s){if(!s)return[];if(Array.isArray(s.cast))return s.cast.map(castById).filter(Boolean);return S.cast.length===1?[S.cast[0]]:[]}
+function dressOf(m){if(!m)return"";let d=(m.dress||"").startsWith("Custom")?"":(m.dress||"");if(d&&m.dressColor&&!/^(Kanjivaram|Kanchi)/.test(d))d=d.charAt(0).toLowerCase()+d.slice(1);return [m.dressColor,d].filter(Boolean).join(" ")+(m.dressNote?((d||m.dressColor)?", ":"")+m.dressNote:"")}
+function talentLine(s,forGem){const ms=castOf(s);if(!ms.length)return"";
+  return `Talent in frame: ${ms.map(m=>`${mLabel(m)}${m.look?", "+m.look:""}${m.hair?", hair & makeup: "+m.hair:""}`).join("; ")}. Match each person's face, skin tone and hair to their reference photo exactly${ms.length>1?", keep them distinct from each other, and keep who stands where consistent with earlier frames":""}.`}
+function talent(){return S.cast.map(m=>`${mLabel(m)}${m.look?": "+m.look:""}`).join("; ")}
+async function migrateCast(){if(S.migrated||!S.castLoaded||S.infl==null||!S.project)return;S.migrated=true;if(S.cast.length)return;const p=S.project;
+  const has=(S.infl&&S.infl.photo)||p.inflName||p.inflLook||p.dress||p.dressColor;if(!has)return;
+  const id=uid();const m={no:1,name:p.inflName||"",look:p.inflLook||"",photo:(S.infl&&S.infl.photo)||"",dress:p.dress||"",dressColor:p.dressColor||"",dressNote:p.dressNote||"",hair:p.hair||"",createdAt:Date.now()};
+  S.cast=[Object.assign({id},m)];await Store.putCast(S.pid,id,m);renderBrief();renderInspector()}
 const GENS={gemini:{label:"Gemini app · free tier (recommended)",short:"Gemini"},pollinations:{label:"Pollinations (free, no login, no face match)",short:"Pollinations"},chatgpt:{label:"ChatGPT (free tier, uses her photo)",short:"ChatGPT"},canva:{label:"Canva (paid after a few)",short:"Canva"}};
 const GEN_URL={gemini:"https://gemini.google.com/app",chatgpt:"https://chatgpt.com/",canva:"https://www.canva.com/ai"};
 function genOf(){return (S.project&&S.project.gen)||"gemini"}
@@ -348,14 +378,14 @@ function freeUrl(s){const [W,H]=arOf(S.project);const k=Math.min(1,1024/Math.max
   return "https://image.pollinations.ai/prompt/"+encodeURIComponent(pr)+"?width="+w+"&height="+h+"&seed="+seedOf()+"&nologo=true"}
 function shotNo(s){return S.shots.indexOf(s)+1}
 function geminiPrompt(s){const n=S.shots.length,i=shotNo(s);const p=S.project||{};
-  const fp=framePrompt(s).replace(/Talent: [^]*?exactly\./,"").replace(/^Photoreal cinematic storyboard frame, [^.]*\.\s*/,"");
-  return `Frame ${i} of ${n}. Generate one ${p.aspect||"16:9"} photoreal image. ${talent()||p.inflName?"If she appears, she is the same woman as in my reference photo and earlier frames: keep her face, skin tone and hair identical. ":""}${fp}`}
+  const fp=framePrompt(s).replace(/^Photoreal cinematic storyboard frame, [^.]*\.\s*/,"");
+  return `Frame ${i} of ${n}. Generate one ${p.aspect||"16:9"} photoreal image. ${castOf(s).length?"Everyone in frame must look identical to their reference photo and to earlier frames. ":""}${fp}`}
 function geminiSession(){const p=S.project||{};const n=S.shots.length;
-  const list=S.shots.map((s,i)=>`${i+1}. ${s.size}, ${s.angle.toLowerCase()}, ${s.lens}mm, ${s.move.toLowerCase()} · ${s.action||"(see frame prompt)"}${shotProds(s).length?" · "+shotProds(s).map(x=>"Prd "+x.no).join(", "):""}${shotLoc(s)?" · Loc "+shotLoc(s).no:""}${s.outfit&&s.outfit.trim()?" · outfit change: "+s.outfit:""}`).join("\n");
-  let k=0;const refs=[(talent()||p.inflName)?`${++k}) talent, ${p.inflName||"the influencer"}`:""].concat(S.products.map(pr=>`${++k}) ${prodLabel(pr)}`)).concat(S.locs.map(l=>`${++k}) recce ${locLabel(l)}`)).filter(Boolean);
+  const list=S.shots.map((s,i)=>`${i+1}. ${s.size}, ${s.angle.toLowerCase()}, ${s.lens}mm, ${s.move.toLowerCase()} · ${s.action||"(see frame prompt)"}${shotProds(s).length?" · "+shotProds(s).map(x=>"Prd "+x.no).join(", "):""}${castOf(s).length?" · "+castOf(s).map(m=>"Model "+m.no).join(" + "):""}${shotLoc(s)?" · Loc "+shotLoc(s).no:""}${s.outfit&&s.outfit.trim()?" · outfit change: "+s.outfit:""}`).join("\n");
+  let k=0;const refs=S.cast.filter(m=>m.photo).map(m=>`${++k}) ${mLabel(m)} face`).concat(S.products.map(pr=>`${++k}) ${prodLabel(pr)}`)).concat(S.locs.map(l=>`${++k}) location photo ${locLabel(l)}`)).filter(Boolean);
   return `You are my storyboard artist for a GRT Jewellers ${p.kind==="topical"?(p.festival||"festive")+" ":""}film (${p.product||"Gold"} jewellery), ${p.aspect||"16:9"}, ${n} frames.
-${talent()||p.inflName?`The attached photo is our talent, ${p.inflName||"the influencer"}${p.inflLook?" ("+p.inflLook+")":""}. Keep her face, skin tone and hair identical in every frame she appears in.`:"Keep the same woman, wardrobe and styling consistent across every frame."}
-${refs.length?`I'm attaching ${refs.length} reference photo${refs.length>1?"s":""} in this order: ${refs.join("; ")}. Reproduce every product exactly as photographed whenever it appears: same design, stones, metal colour and proportions.${S.locs.length?" The recce photos are the real shoot locations: when a frame names a Loc, match that place's architecture, layout and finishes.":""}\n`:""}${continuityLock()?`CONTINUITY LOCK, identical in every frame unless I say otherwise: ${continuityLock()}.\n`:""}This is one continuous film: each frame must cut naturally from the previous one, with the same jewellery placement, hair, set and light direction, and matching action and screen direction.
+${S.cast.length?`Cast: ${S.cast.map(m=>`${mLabel(m)}${m.look?" ("+m.look+")":""}${dressOf(m)?", wearing "+dressOf(m):""}${m.hair?", "+m.hair:""}`).join("; ")}. Keep each person's face, skin tone, hair and outfit identical in every frame they appear in${S.cast.length>1?", and never swap or blend their faces":""}.`:"Keep the same talent, wardrobe and styling consistent across every frame."}
+${refs.length?`I'm attaching ${refs.length} reference photo${refs.length>1?"s":""} in this order: ${refs.join("; ")}. Reproduce every product exactly as photographed whenever it appears: same design, stones, metal colour and proportions.${S.locs.length?" The location photos are the real shoot locations: when a frame names a Loc, match that place's architecture, layout and finishes.":""}\n`:""}${continuityLock()?`CONTINUITY LOCK, identical in every frame unless I say otherwise: ${continuityLock()}.\n`:""}This is one continuous film: each frame must cut naturally from the previous one, with the same jewellery placement, hair, set and light direction, and matching action and screen direction.
 Look for every frame: ${p.style||DEFAULT_STYLE}${p.bg?` Background: ${p.bg}.`:""}${p.props?` Props: ${p.props}.`:""}${p.light?` Lighting: ${p.light}.`:""}
 The jewellery is always the hero: sharp, readable and catching the light. Never put text, logos or watermarks in the images. Leave clean copy space on end frames.
 
@@ -366,35 +396,39 @@ Generate frame 1 now. I'll ask for each next frame by number.`}
 const DRESSES=["Kanjivaram silk saree","Kanchi silk saree, minimal Nalli-style","Gold beige tissue saree","Half-saree / pavadai davani","Lehenga with sweetheart-neckline blouse","Sleeveless kurta set with shawl","Pastel evening gown","Indo-western drape","Custom (describe below)"];
 const COLOURS=["Pastel pink","Gold beige","Icy blue","Emerald green","Crimson red","Ivory","Lavender","Maroon","Mustard yellow","Navy"];
 const TODS=["Golden hour","Bright day, soft window light","Evening, warm lamps","Night, festive lights","Studio, controlled light"];
-function lookText(){const p=S.project||{};let d=(p.dress||"").startsWith("Custom")?"":(p.dress||"");if(d&&p.dressColor&&!/^(Kanjivaram|Kanchi)/.test(d))d=d.charAt(0).toLowerCase()+d.slice(1);return [p.dressColor,d].filter(Boolean).join(" ")+(p.dressNote?((d||p.dressColor)?", ":"")+p.dressNote:"")}
-function outfitOf(s){return (s&&s.outfit&&s.outfit.trim())||lookText()}
+function lookText(){return S.cast.filter(m=>dressOf(m)).map(m=>`${mLabel(m)}: ${dressOf(m)}`).join("; ")}
+function outfitOf(s){if(s&&s.outfit&&s.outfit.trim())return s.outfit.trim();return castOf(s).filter(m=>dressOf(m)).map(m=>(S.cast.length>1?mLabel(m)+": ":"")+dressOf(m)).join("; ")}
 function prodById(id){return S.products.find(x=>x.id===id)}
 function prodLabel(pr){return `Prd ${pr.no}${pr.name?" ("+pr.name+")":""}`}
 function locById(id){return S.locs.find(x=>x.id===id)}
 function locLabel(l){return `Loc ${l.no}${l.name?" ("+l.name+")":""}`}
-function shotLoc(s){return s&&s.loc?locById(s.loc):null}
+function shotLoc(s){if(!s)return null;if(s.loc)return locById(s.loc)||null;return S.locs.length===1?S.locs[0]:null}
 function shotProds(s){return (s.prods||[]).map(prodById).filter(Boolean)}
-function continuityLock(s){const p=S.project||{};const ov=s&&s.outfit&&s.outfit.trim();return [!ov&&lookText()&&`outfit: ${lookText()}`,p.hair&&`hair & makeup: ${p.hair}`,p.setLoc&&`set: ${p.setLoc}`,p.tod&&`time & light: ${p.tod}`].filter(Boolean).join("; ")}
+function continuityLock(s){const p=S.project||{};const ov=s&&s.outfit&&s.outfit.trim();const ms=s?castOf(s):S.cast;
+  return [!ov&&ms.some(m=>dressOf(m))&&`wardrobe: ${ms.filter(m=>dressOf(m)).map(m=>mLabel(m)+" in "+dressOf(m)).join("; ")}`,ms.some(m=>m.hair)&&`hair & makeup: ${ms.filter(m=>m.hair).map(m=>mLabel(m)+" "+m.hair).join("; ")}`,p.setLoc&&`set dressing: ${p.setLoc}`,p.tod&&`time & light: ${p.tod}`].filter(Boolean).join("; ")}
 function prevShot(s){const i=S.shots.indexOf(s);return i>0?S.shots[i-1]:null}
 function continuityLine(s){const pv=prevShot(s);if(!pv)return "";const n=S.shots.indexOf(s);
-  const chg=s.outfit&&s.outfit.trim()&&outfitOf(s)!==outfitOf(pv);
-  return `Continuity with frame ${n} (${pv.size.toLowerCase()}${pv.action?": "+(pv.action.length>90?pv.action.slice(0,90).replace(/\s+\S*$/,"")+"…":pv.action):""}): ${chg?`outfit deliberately changes to ${outfitOf(s)}; `:"same outfit, "}same jewellery placement, hair, set and light direction; continue the action and screen direction from that frame.`}
+  const chg=s.outfit&&s.outfit.trim()&&outfitOf(s)!==outfitOf(pv);const ms=castOf(s),pm=castOf(pv);const newIn=ms.filter(m=>!pm.includes(m));
+  return `Continuity with frame ${n} (${pv.size.toLowerCase()}${pv.action?": "+(pv.action.length>90?pv.action.slice(0,90).replace(/\s+\S*$/,"")+"…":pv.action):""}): ${chg?`outfit deliberately changes to ${outfitOf(s)}; `:"same outfits, "}${newIn.length&&pm.length?newIn.map(mLabel).join(" and ")+" now enters the scene; ":""}${s.loc&&pv.loc&&s.loc!==pv.loc?"new location as tagged; ":"same location, "}same jewellery placement, hair and light direction; continue the action and screen direction from that frame.`}
 function continuityFlags(s){const f=[];const pv=prevShot(s);
-  if(S.locs.length&&!s.loc&&!["Macro","Insert","Extreme close-up"].includes(s.size))f.push("No recce location tagged. Pick where this shot happens so the set matches the recce.");
-  if(pv&&s.loc&&pv.loc&&s.loc!==pv.loc&&!(s.cont||"").trim())f.push(`Location changes from shot ${S.shots.indexOf(pv)+1}. If she moves, say so in the continuity note.`);
+  const prodOnly=["Macro","Insert","Extreme close-up"].includes(s.size);
+  if(S.locs.length>1&&!s.loc&&!prodOnly)f.push("No location tagged. Pick where this shot happens so the set matches the location photo.");
+  if(S.cast.length>1&&!Array.isArray(s.cast)&&!prodOnly)f.push("Who's in this shot? Tag the models so faces and outfits stay consistent.");
+  if(pv&&s.loc&&pv.loc&&s.loc!==pv.loc&&!(s.cont||"").trim())f.push(`Location changes from shot ${S.shots.indexOf(pv)+1}. If they move, say so in the continuity note.`);
   if(pv&&pv.size===s.size&&pv.angle===s.angle)f.push(`Jump cut: same size and angle as shot ${S.shots.indexOf(pv)+1}. Change the size or angle by at least one step.`);
-  if(pv&&outfitOf(s)!==outfitOf(pv)&&!(s.cont||"").trim())f.push(`Outfit changes from shot ${S.shots.indexOf(pv)+1}. If it's intentional, say why in the continuity note.`);
+  if(pv&&(s.outfit||"").trim()&&(s.outfit||"").trim()!==(pv.outfit||"").trim()&&!(s.cont||"").trim())f.push(`Outfit changes from shot ${S.shots.indexOf(pv)+1}. If it's intentional, say why in the continuity note.`);
   if(S.products.length&&!(s.prods||[]).length&&["Macro","Insert","Extreme close-up","Close-up"].includes(s.size))f.push("Product close-up with no product tagged. Pick which product is in frame.");
   if(pv&&(s.prods||[]).length&&(pv.prods||[]).length&&s.size!=="Macro"&&pv.size!=="Macro"&&!(s.prods||[]).some(x=>(pv.prods||[]).includes(x))&&!(s.cont||"").trim())f.push(`Different jewellery from shot ${S.shots.indexOf(pv)+1} on the same talent. Note the change or keep the same piece.`);
+  const locL=shotLoc(s);if(locL===null&&S.locs.length===1&&!prodOnly){}
   return f}
 function genLink(s){const g=genOf();return g==="pollinations"?freeUrl(s):GEN_URL[g]}
 function framePrompt(s){
-  const p=S.project||{};const t=talent();
+  const p=S.project||{};const t=talentLine(s);
   const tr=[p.bg&&`background ${p.bg}`,p.props&&`props: ${p.props}`,p.light&&`lighting: ${p.light}`,p.place&&`product placement: ${p.place}`].filter(Boolean).join("; ");
   const pr=shotProds(s);const lock=continuityLock(s);
-  return [`Photoreal cinematic storyboard frame, ${p.aspect||"16:9"}.`,`${s.size} shot, ${s.angle.toLowerCase()}, ${s.lens}mm lens${s.move!=="Static"?`, start of a ${s.move.toLowerCase()} move`:""}.`,s.action,t?`Talent: ${t}. Match the face, skin tone and hair of the person in the reference photo exactly.`:"",pr.length?`Jewellery in frame: ${pr.map(prodLabel).join(", ")}. Reproduce ${pr.length>1?"each piece":"the piece"} exactly as in my product reference photo${pr.length>1?"s":""}: same design, stones, metal colour and proportions.`:`Hero product: GRT ${p.product||"Gold"} jewellery, sharp, readable and catching the light.`,outfitOf(s)?`Wardrobe: ${outfitOf(s)}.`:"",shotLoc(s)?`Location: the real place in my recce photo ${locLabel(shotLoc(s))}. Match its architecture, layout, wall and floor finishes and colours exactly; keep it clean and art-directed for a premium jewellery film, and frame it for a ${s.size.toLowerCase()} from a ${s.angle.toLowerCase()}.`:"",lock?`Continuity lock (identical in every frame): ${lock}.`:"",continuityLine(s),tr?`Treatment: ${tr}.`:"",p.style?`Look: ${p.style}`:"",/end frame/i.test(s.action)?"Leave clean copy space for the logo and super.":"","No text, logos or watermarks in the image."].filter(Boolean).join(" ");
+  return [`Photoreal cinematic storyboard frame, ${p.aspect||"16:9"}.`,`${s.size} shot, ${s.angle.toLowerCase()}, ${s.lens}mm lens${s.move!=="Static"?`, start of a ${s.move.toLowerCase()} move`:""}.`,s.action,t,pr.length?`Jewellery in frame: ${pr.map(prodLabel).join(", ")}. Reproduce ${pr.length>1?"each piece":"the piece"} exactly as in my product reference photo${pr.length>1?"s":""}: same design, stones, metal colour and proportions.`:`Hero product: GRT ${p.product||"Gold"} jewellery, sharp, readable and catching the light.`,outfitOf(s)?`Wardrobe: ${outfitOf(s)}.`:"",shotLoc(s)?`Location: the real place in my location photo ${locLabel(shotLoc(s))}. Match its architecture, layout, wall and floor finishes and colours exactly; keep it clean and art-directed for a premium jewellery film, and frame it for a ${s.size.toLowerCase()} from a ${s.angle.toLowerCase()}.`:"",lock?`Continuity lock (identical in every frame): ${lock}.`:"",continuityLine(s),tr?`Treatment: ${tr}.`:"",p.style?`Look: ${p.style}`:"",/end frame/i.test(s.action)?"Leave clean copy space for the logo and super.":"","No text, logos or watermarks in the image."].filter(Boolean).join(" ");
 }
-function ctx(){const p=S.project||{};return `${S.products.length?`Products to feature (use these numbers): ${S.products.map(prodLabel).join("; ")}.\n`:""}${continuityLock()?`Continuity lock for every shot: ${continuityLock()}.\n`:""}Client: GRT Jewellers (South India). ${p.kind==="topical"?`Festival topical: ${p.festival||"(festival)"}${p.festDate?" on "+p.festDate:""}, ${TIERS[p.tier]||""}.`:`BAU ${p.row||""}.`} Product line: ${p.product||"Gold"}.\nTreatment: background ${p.bg||"(open)"}; props ${p.props||"(open)"}; lights & shadows ${p.light||"(open)"}; product placement ${p.place||"(open)"}.\nFormat: ${p.aspect||"16:9"} video.\nBrief / script:\n${p.brief||"(none)"}\nLook & feel: ${p.style||"(none)"}\nCharacters & ingredients: ${p.cast||"(none)"}${talent()?`\nTalent (influencer, appears in the film): ${talent()}`:""}`}
+function ctx(){const p=S.project||{};return `${S.products.length?`Products to feature (use these numbers): ${S.products.map(prodLabel).join("; ")}.\n`:""}${continuityLock()?`Continuity lock for every shot: ${continuityLock()}.\n`:""}Client: GRT Jewellers (South India). ${p.kind==="topical"?`Festival topical: ${p.festival||"(festival)"}${p.festDate?" on "+p.festDate:""}, ${TIERS[p.tier]||""}.`:`BAU ${p.row||""}.`} Product line: ${p.product||"Gold"}.\nTreatment: background ${p.bg||"(open)"}; props ${p.props||"(open)"}; lights & shadows ${p.light||"(open)"}; product placement ${p.place||"(open)"}.\nFormat: ${p.aspect||"16:9"} video.\nBrief / script:\n${p.brief||"(none)"}\nLook & feel: ${p.style||"(none)"}\nCharacters & ingredients: ${p.cast||"(none)"}${S.cast.length?`\nCast (use these labels): ${S.cast.map(m=>`${mLabel(m)}${m.look?": "+m.look:""}${dressOf(m)?", wearing "+dressOf(m):""}`).join("; ")}`:""}${S.locs.length?`\nLocations: ${S.locs.map(locLabel).join("; ")}`:""}`}
 
 async function breakBrief(){
   if(!S.sample||!S.project)return;
@@ -478,6 +512,8 @@ function meter(kind,inText,outText,extraIn,label){
   const next={inr:+(u.inr+cr).toFixed(4),inTok:u.inTok+inT,outTok:u.outTok+outT,usd:u.usd+usd,n:u.n+1,frames:u.frames,last:entry,log:[entry].concat(u.log).slice(0,40)};
   S.project=Object.assign({},S.project,{usage:next});saveProject(0);renderMeter();
 }
+function overBudget(){return remaining()<=0}
+function estLabel(kind){return ` · ~${rs(EST[kind]||2)}`}
 function countFrame(){if(!S.project)return;const u=usage();S.project=Object.assign({},S.project,{usage:Object.assign({},u,{frames:u.frames+1})});saveProject(800);renderMeter()}
 function renderMeter(){
   const el=$("#meter");if(!el)return;if(!S.pid||!S.project){el.innerHTML="";return}
@@ -531,22 +567,22 @@ async function exportDeck(){
     const pUrls={};for(const pr of S.products.slice(0,6)){if(!pr.photo||!/^data:image\/jpeg;base64,/.test(pr.photo))continue;step(`Uploading Prd ${pr.no}…`);
       const up=await mcp.callTool("Google Drive","create_file",{title:`storyroom-prd${pr.no}.jpg`,base64Content:pr.photo.split(",")[1],contentMimeType:"image/jpeg",disableConversionToGoogleType:true},{cache:false});
       const fid=pickId(up.payload);if(!fid)continue;temp.push(fid);await mcp.callTool("Google Drive","share_file",{fileId:fid,permissionId:"anyoneWithLink",role:"reader"},{cache:false});pUrls[pr.id]="https://drive.google.com/uc?export=view&id="+fid}
-    const lUrls={};for(const l of S.locs.slice(0,6)){if(!l.photo||!/^data:image\/jpeg;base64,/.test(l.photo))continue;step(`Uploading recce Loc ${l.no}…`);
+    const lUrls={};for(const l of S.locs.slice(0,6)){if(!l.photo||!/^data:image\/jpeg;base64,/.test(l.photo))continue;step(`Uploading location Loc ${l.no}…`);
       const up=await mcp.callTool("Google Drive","create_file",{title:`storyroom-loc${l.no}.jpg`,base64Content:l.photo.split(",")[1],contentMimeType:"image/jpeg",disableConversionToGoogleType:true},{cache:false});
       const fid=pickId(up.payload);if(!fid)continue;temp.push(fid);await mcp.callTool("Google Drive","share_file",{fileId:fid,permissionId:"anyoneWithLink",role:"reader"},{cache:false});lUrls[l.id]="https://drive.google.com/uc?export=view&id="+fid}
     const reqs=[];const rt=runtime();
     const sub=p.kind==="topical"?`${p.festival||"Festival"} topical${p.festDate?" · "+p.festDate:""}${p.tier?" · Tier "+p.tier:""}`:(p.row||"BAU");
     reqs.push({createSlide:{objectId:"sr_cover",insertionIndex:0,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg("sr_cover",MAROON),
       box("sr_ct","sr_cover",50,120,620,80),{insertText:{objectId:"sr_ct",text:p.name||"Storyboard"}},style("sr_ct",CREAM,36,true),
-      box("sr_cs","sr_cover",50,205,620,90),{insertText:{objectId:"sr_cs",text:`GRT Jewellers · ${p.product||""} · ${sub}\n${S.shots.length} shots · ${fmtTime(rt)} runtime · ${p.aspect||"16:9"}${p.inflName?" · Talent: "+p.inflName:""}\nStoryboard for approval · ${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}`}},style("sr_cs",hexRgb("#f2b8bb"),14,false));
+      box("sr_cs","sr_cover",50,205,620,90),{insertText:{objectId:"sr_cs",text:`GRT Jewellers · ${p.product||""} · ${sub}\n${S.shots.length} shots · ${fmtTime(rt)} runtime · ${p.aspect||"16:9"}${S.cast.length?" · Cast: "+S.cast.map(m=>m.name||"Model "+m.no).join(", "):""}\nStoryboard for approval · ${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}`}},style("sr_cs",hexRgb("#f2b8bb"),14,false));
     const look=(S.products.length||continuityLock())?1:0;const rec=S.locs.length?1:0;const off=look+rec;
-    if(rec){const at=1+look;reqs.push({createSlide:{objectId:"sr_rec",insertionIndex:at,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg("sr_rec",CREAM),box("sr_rh","sr_rec",25,18,670,34),{insertText:{objectId:"sr_rh",text:"Recce locations"}},style("sr_rh",MAROON,20,true));
+    if(rec){const at=1+look;reqs.push({createSlide:{objectId:"sr_rec",insertionIndex:at,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg("sr_rec",CREAM),box("sr_rh","sr_rec",25,18,670,34),{insertText:{objectId:"sr_rh",text:"Locations"}},style("sr_rh",MAROON,20,true));
       S.locs.slice(0,6).forEach((l,j)=>{const col=j%3,row=Math.floor(j/3);const x=25+col*228,y=62+row*165;if(lUrls[l.id])reqs.push({createImage:{objectId:"sr_ri"+j,url:lUrls[l.id],elementProperties:{pageObjectId:"sr_rec",size:{width:pt(214),height:pt(130)},transform:{scaleX:1,scaleY:1,translateX:x,translateY:y,unit:"PT"}}}});
         const used=S.shots.map((x,i)=>x.loc===l.id?i+1:0).filter(Boolean);reqs.push(box("sr_rl"+j,"sr_rec",x,y+132,214,26),{insertText:{objectId:"sr_rl"+j,text:`Loc ${l.no}${l.name?" · "+l.name:""}${used.length?"  ·  shots "+used.join(", "):""}`}},style("sr_rl"+j,INK,9,false))})}
     if(look){reqs.push({createSlide:{objectId:"sr_look",insertionIndex:1,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg("sr_look",CREAM),box("sr_lh","sr_look",25,18,670,34),{insertText:{objectId:"sr_lh",text:"Products & continuity"}},style("sr_lh",MAROON,20,true));
       const ps=S.products.slice(0,6);ps.forEach((pr,j)=>{const x=25+j*112;if(pUrls[pr.id])reqs.push({createImage:{objectId:"sr_pi"+j,url:pUrls[pr.id],elementProperties:{pageObjectId:"sr_look",size:{width:pt(100),height:pt(100)},transform:{scaleX:1,scaleY:1,translateX:x,translateY:62,unit:"PT"}}}});
         reqs.push(box("sr_pl"+j,"sr_look",x,166,104,40),{insertText:{objectId:"sr_pl"+j,text:`Prd ${pr.no}${pr.name?"\n"+pr.name:""}`}},style("sr_pl"+j,INK,9,false))});
-      const lk=[lookText()&&`Outfit: ${lookText()}`,p.hair&&`Hair & makeup: ${p.hair}`,p.setLoc&&`Set: ${p.setLoc}`,p.tod&&`Time & light: ${p.tod}`,p.inflName&&`Talent: ${p.inflName}`].filter(Boolean).join("\n")||"Continuity: same talent, outfit, jewellery placement, set and light across all shots.";
+      const lk=[S.cast.length&&S.cast.map(m=>`${mLabel(m)}${dressOf(m)?": "+dressOf(m):""}${m.hair?" · "+m.hair:""}`).join("\n"),p.setLoc&&`Set: ${p.setLoc}`,p.tod&&`Time & light: ${p.tod}`,].filter(Boolean).join("\n")||"Continuity: same talent, outfit, jewellery placement, set and light across all shots.";
       reqs.push(box("sr_lt","sr_look",25,ps.length?220:62,670,160),{insertText:{objectId:"sr_lt",text:lk+"\n\nLocked across every frame unless a shot slide says otherwise."}},style("sr_lt",INK,12,false))}
     let t=0;
     S.shots.forEach((s,i)=>{const sid="sr_s"+i,tid="sr_t"+i,hid="sr_h"+i;
@@ -557,7 +593,7 @@ async function exportDeck(){
       reqs.push(box(hid,sid,tx,iy,tw,34),{insertText:{objectId:hid,text:head}},style(hid,MAROON,20,true));
       const cam=`${s.size} · ${s.angle} · ${s.lens}mm · ${s.move} · ${s.duration}s`;
       const sup=(s.dlg?`\n\nDialogue: “${s.dlg}”`:"")+(s.vo?`\n\nSuper: “${s.vo}”`:"")+(needsQC(s)?"  [TO QC]":"");
-      const prl=shotProds(s).map(x=>"Prd "+x.no+(x.name?" ("+x.name+")":"")).join(", ");const oc=(shotLoc(s)?`\nLocation: ${locLabel(shotLoc(s))}`:"")+(s.outfit&&s.outfit.trim()?`\nOutfit change: ${s.outfit}`:"");const cn=s.cont&&s.cont.trim()?`\nContinuity: ${s.cont}`:"";
+      const prl=shotProds(s).map(x=>"Prd "+x.no+(x.name?" ("+x.name+")":"")).join(", ");const oc=(castOf(s).length?`\nTalent: ${castOf(s).map(mLabel).join(", ")}`:"")+(shotLoc(s)?`\nLocation: ${locLabel(shotLoc(s))}`:"")+(s.outfit&&s.outfit.trim()?`\nOutfit change: ${s.outfit}`:"");const cn=s.cont&&s.cont.trim()?`\nContinuity: ${s.cont}`:"";
       const body=`${cam}\n\n${s.action||"(action to be written)"}${sup}${prl?"\n\nProducts: "+prl:""}${oc}${cn}\n\nStatus: ${STATUS[s.status]||s.status}`;
       reqs.push(box(tid,sid,tx,iy+42,tw,ih-42),{insertText:{objectId:tid,text:body}},style(tid,INK,12,false),style(tid,RED,11,true,{type:"FIXED_RANGE",startIndex:0,endIndex:cam.length}));
     });
@@ -669,10 +705,11 @@ function openProject(pid,initial){
   S.unsub.forEach(f=>{try{f()}catch(e){}});S.unsub=[];
   S.pid=pid;S.project=initial||null;S.shots=[];S.shotsLoaded=false;S.sel=null;S.pending={};
   if(location.hash!=="#p-"+pid){try{history.replaceState(null,"","#p-"+pid)}catch(e){location.hash="p-"+pid}}
-  S.infl=null;S.products=[];S.locs=[];showView("project");renderProject();
+  S.infl=null;S.products=[];S.locs=[];S.cast=[];S.castLoaded=false;S.migrated=false;showView("project");renderProject();
+  S.unsub.push(Store.subCast(pid,list=>{if(S.pid!==pid)return;S.cast=list;S.castLoaded=true;migrateCast();if(!$("#briefPane").contains(document.activeElement))renderBrief();if(!$("#inspector").contains(document.activeElement))renderInspector();renderSB()},()=>{}));
   S.unsub.push(Store.subLocs(pid,list=>{if(S.pid!==pid)return;S.locs=list;if(!$("#briefPane").contains(document.activeElement))renderBrief();if(!$("#inspector").contains(document.activeElement))renderInspector();renderSB()},()=>{}));
   S.products=[];S.unsub.push(Store.subProducts(pid,list=>{if(S.pid!==pid)return;S.products=list;if(!$("#briefPane").contains(document.activeElement))renderBrief();if(!$("#inspector").contains(document.activeElement))renderInspector();renderSB()},()=>{}));
-  Store.getRef(pid,"influencer").then(r=>{if(S.pid!==pid)return;S.infl=r||{};renderBrief()});
+  Store.getRef(pid,"influencer").then(r=>{if(S.pid!==pid)return;S.infl=r||{};migrateCast();renderBrief()});
   const tm=setTimeout(()=>{if(!S.shotsLoaded)banner("Can't reach saved data yet. What you see may be out of date.")},10000);
   S.unsub.push(Store.subProject(pid,(p,meta)=>{
     if(S.pid!==pid)return;
@@ -706,49 +743,48 @@ function renderTop(){
   const has=S.shots.length>0;
   $("#topActions").innerHTML=`<button data-act="shotlist" ${has?"":"disabled"} title="Copy as a table to paste into Sheets">Copy shot list</button><button data-act="prompts" ${has?"":"disabled"} title="Video prompts for Flow / Veo">Copy all prompts</button><button data-act="frames" ${has?"":"disabled"}>✦ Generate frames</button><button data-act="export" ${has?"":"disabled"}>⇪ Export to Slides</button>${p.deckUrl?`<button data-act="share">Share deck</button>`:""}<button class="primary" data-act="present" ${has?"":"disabled"}>▶ Play animatic</button>`;
 }
+function grp(key,title,note,body){return `<details class="grp" data-grp="${key}" ${S.grp[key]?"open":""}><summary><span class="t">${title}</span>${note?`<span class="n">${note}</span>`:""}</summary><div class="body">${body}</div></details>`}
+function imgUrl(x){return x&&/^data:image\//.test(x)?x:""}
+function opts(list,cur,ph,fmt){return (ph?`<option value="">${esc(ph)}</option>`:"")+list.map(v=>`<option value="${esc(v)}" ${String(v)===String(cur)?"selected":""}>${esc(fmt?fmt(v):v)}</option>`).join("")}
+function castCard(m){return `<div class="castcard"><div class="top"><div class="pic" data-castphoto="${esc(m.id)}" title="Upload face photo" ${imgUrl(m.photo)?`style="background-image:url('${imgUrl(m.photo)}');border-style:solid"`:""}>${imgUrl(m.photo)?"":"+ Face<br>photo"}</div>
+  <div class="col"><div class="hd"><span class="mno">Model ${m.no}</span><button class="ghost" style="padding:2px 8px" data-delcast="${esc(m.id)}" title="Remove model">×</button></div>
+  <input data-castf="name" data-cid="${esc(m.id)}" value="${esc(m.name)}" placeholder="Name, e.g. Priya">
+  ${S.sample&&imgUrl(m.photo)?`<button data-castdesc="${esc(m.id)}" ${S.busy["d"+m.id]?"disabled":""}>${S.busy["d"+m.id]?'<span class="spin"></span>Reading photo…':"✦ Describe look"+estLabel("desc",6800)}</button>`:""}</div></div>
+  <div class="lbl">Look notes</div><input data-castf="look" data-cid="${esc(m.id)}" value="${esc(m.look)}" placeholder="Late 20s, long wavy hair, warm brown skin">
+  <div class="grid2"><div><div class="lbl">Dress</div><select data-castf="dress" data-cid="${esc(m.id)}">${opts(DRESSES,m.dress,"Choose")}</select></div><div><div class="lbl">Colour</div><select data-castf="dressColor" data-cid="${esc(m.id)}">${opts(COLOURS,m.dressColor,"Choose")}</select></div></div>
+  <div class="lbl">Dress details</div><input data-castf="dressNote" data-cid="${esc(m.id)}" value="${esc(m.dressNote)}" placeholder="Zari border, elbow-length blouse">
+  <div class="lbl">Hair &amp; makeup</div><input data-castf="hair" data-cid="${esc(m.id)}" value="${esc(m.hair)}" placeholder="Low bun with jasmine, dewy makeup"></div>`}
 function renderBrief(){
   const p=S.project;const el=$("#briefPane");
   if(!p){el.innerHTML=`<p class="muted" style="padding-top:14px"><span class="spin"></span>Loading…</p>`;return}
-  el.innerHTML=`
-  <div class="lbl">Project name</div><input data-p="name" value="${esc(p.name)}">
-  <div class="lbl">Product line</div><select data-p="product">${PRODUCTS.map(x=>`<option ${x===(p.product||"Gold")?"selected":""}>${x}</option>`).join("")}</select>
+  const film=`<div class="lbl">Film name</div><input data-p="name" value="${esc(p.name)}">
+  <div class="grid2"><div><div class="lbl">Product line</div><select data-p="product">${opts(PRODUCTS,p.product||"Gold")}</select></div><div><div class="lbl">Format</div><select data-p="aspect">${opts(Object.keys(ASPECTS),p.aspect||"16:9")}</select></div></div>
   <div class="lbl">Type</div><select data-p="kind">${Object.keys(KINDS).map(k=>`<option value="${k}" ${k===(p.kind||"bau")?"selected":""}>${KINDS[k]}</option>`).join("")}</select>
-  ${(p.kind||"bau")==="bau"?`<div class="lbl">Row label</div><input data-p="row" value="${esc(p.row)}" placeholder="Gold Row 1">`:`<div class="lbl">Festival</div><input data-p="festival" value="${esc(p.festival)}"><div class="lbl"><span>Festival date</span><span class="warn">⚑ Yogesh confirms</span></div><input type="date" data-p="festDate" value="${esc(p.festDate)}"><div class="lbl">Tier</div><select data-p="tier">${Object.keys(TIERS).map(t=>`<option value="${t}" ${String(t)===String(p.tier)?"selected":""}>${TIERS[t]}</option>`).join("")}</select>`}
-  <div class="lbl">Format</div><select data-p="aspect">${Object.keys(ASPECTS).map(a=>`<option ${a===(p.aspect||"16:9")?"selected":""}>${a}</option>`).join("")}</select>
-  <div class="lbl">Brief / script</div><textarea data-p="brief" rows="9" placeholder="Paste the brief, script or call notes">${esc(p.brief)}</textarea>
-  ${S.sample?`<button class="primary" style="width:100%;margin-top:8px" data-act="break" ${S.busy.brk?"disabled":""}>${S.busy.brk?'<span class="spin"></span>Breaking into shots…':"✦ Break brief into shots"}</button><p class="hint">Adds shots after the last one. Nothing is overwritten.</p>`:`<p class="hint">Claude features are off in this view, so add shots by hand.</p>`}
-  <div class="row"><button data-act="importScript" style="flex:1">⇩ Paste PRISM script</button></div>
-  <div class="sec">Frame generator</div>
-  <select data-p="gen">${Object.keys(GENS).map(k=>`<option value="${k}" ${k===genOf()?"selected":""}>${GENS[k].label}</option>`).join("")}</select>
-  <p class="hint">${genOf()==="gemini"?"Free tier at gemini.google.com, with a daily image cap. Run one Gemini chat per film so her face stays consistent. Frames cost ₹0 of the Claude budget.":genOf()==="pollinations"?"Free, no login. It can't use a reference photo, so her face will vary. Use Gemini or ChatGPT when the face has to match.":genOf()==="canva"?"Canva's AI credits run out after a few images on a free plan.":"Free tier at gemini.google.com, with a daily image cap. Run one Gemini chat per film so her face stays consistent."}</p>
-  <div class="sec">Products <span>numbered like the calendar</span></div>
-  ${S.products.length?`<div class="pgrid">${S.products.map(pr=>`<div class="pcell"><div class="pimg" style="background-image:url('${pr.photo&&/^data:image\//.test(pr.photo)?pr.photo:""}')"></div><span class="pno">Prd ${pr.no}</span><button class="pdel" data-delprod="${esc(pr.id)}" title="Remove">×</button><input data-prod="${esc(pr.id)}" value="${esc(pr.name)}" placeholder="Name"></div>`).join("")}</div>`:`<p class="hint">Upload the exact pieces the film must show. Tag them per shot so every frame uses the real product.</p>`}
-  <div class="row"><button data-act="addprod">+ Upload product photos</button></div>
-  <div class="sec">Recce locations <span>real places from the recce</span></div>
-  ${S.locs.length?`<div class="pgrid">${S.locs.map(l=>`<div class="pcell wide"><div class="pimg" style="background-image:url('${l.photo&&/^data:image\//.test(l.photo)?l.photo:""}')"></div><span class="lno">Loc ${l.no}</span><button class="pdel" data-delloc="${esc(l.id)}" title="Remove">×</button><input data-locn="${esc(l.id)}" value="${esc(l.name)}" placeholder="e.g. Living room"></div>`).join("")}</div>`:""}
-  <div class="drop" id="recceDrop" data-act="addloc"><b>Drop recce photos here</b><br>or click to upload. Tag each shot with its location so frames match the real space.</div>
-  <div class="sec">Look &amp; continuity <span>locked in every frame</span></div>
-  <div class="lbl">Dress</div><select data-p="dress"><option value="">Choose a dress</option>${DRESSES.map(d=>`<option ${d===p.dress?"selected":""}>${esc(d)}</option>`).join("")}</select>
-  <div class="lbl">Colour</div><div class="chips">${COLOURS.map(c=>`<button class="chip ${c===p.dressColor?"on":""}" data-pchip="dressColor" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-  <div class="lbl">Dress details</div><input data-p="dressNote" value="${esc(p.dressNote)}" placeholder="e.g. zari border, elbow-length blouse, pallu over left shoulder">
-  <div class="lbl">Hair &amp; makeup</div><input data-p="hair" value="${esc(p.hair)}" placeholder="e.g. low bun with jasmine, soft dewy makeup">
-  <div class="lbl">Set / location</div><input data-p="setLoc" value="${esc(p.setLoc)}" placeholder="e.g. cream-and-gold living room with brass lamps">
-  <div class="lbl">Time &amp; light</div><select data-p="tod"><option value="">Choose</option>${TODS.map(t=>`<option ${t===p.tod?"selected":""}>${esc(t)}</option>`).join("")}</select>
-  ${lookText()?`<p class="hint">Locked look: <b style="color:var(--text)">${esc(lookText())}</b>. A shot can override it in its Continuity section.</p>`:""}
-  <div class="sec">Influencer <span>face in every frame</span></div>
-  <div class="infl"><div class="pic" ${S.infl&&S.infl.photo?`style="background-image:url('${S.infl.photo}')"`:""}>${S.infl&&S.infl.photo?"":S.infl==null?'<span class="spin"></span>':"No photo"}</div>
-   <div class="col"><input data-p="inflName" value="${esc(p.inflName)}" placeholder="Influencer name"><button data-act="inflPhoto">${S.infl&&S.infl.photo?"Change photo":"Upload photo"}</button>${S.sample&&S.infl&&S.infl.photo?`<button data-act="inflDescribe" ${S.busy.desc?"disabled":""}>${S.busy.desc?'<span class="spin"></span>Reading photo…':"✦ Describe look"}</button>`:""}</div></div>
-  <div class="lbl">Look notes</div><textarea data-p="inflLook" rows="3" placeholder="Late 20s, long wavy dark hair, warm brown skin, expressive eyes">${esc(p.inflLook)}</textarea>
-  <p class="hint">Keep this photo handy to attach in Gemini or ChatGPT. Check the influencer contract covers AI likeness.</p>
-  <div class="sec">Treatment <span>reused in every prompt</span></div>
-  <div class="lbl">Background colour</div><input data-p="bg" value="${esc(p.bg)}" placeholder="Cream #FFF7DE seamless">
-  <div class="lbl">Props</div><input data-p="props" value="${esc(p.props)}" placeholder="Brass diya, marigold petals, silk drape">
-  <div class="lbl">Lights &amp; shadows</div><input data-p="light" value="${esc(p.light)}" placeholder="Hard key from left, long soft shadow">
-  <div class="lbl">Product placement</div><input data-p="place" value="${esc(p.place)}" placeholder="Right third, copy space left">
-  <div class="lbl">Look &amp; feel</div><textarea data-p="style" rows="3" placeholder="e.g. warm golden-hour light, 35mm film grain, festive South Indian palette">${esc(p.style)}</textarea>
-  <div class="lbl">Model &amp; product</div><textarea data-p="cast" rows="4" placeholder="Asha: 30s, maroon silk saree, gold temple necklace. Product: 22K gold bangle set">${esc(p.cast)}</textarea>
-  <div class="sec">Danger zone</div>
-  <button class="ghost danger" data-act="delproj" style="width:100%">${S.confirmDel?"Click again to delete this storyboard":"Delete film"}</button>`;
+  ${(p.kind||"bau")==="bau"?`<div class="lbl">Row label</div><input data-p="row" value="${esc(p.row)}" placeholder="Gold Row 1">`:`<div class="lbl">Festival</div><input data-p="festival" value="${esc(p.festival)}"><div class="grid2"><div><div class="lbl"><span>Date</span><span class="warn">⚑ Yogesh</span></div><input type="date" data-p="festDate" value="${esc(p.festDate)}"></div><div><div class="lbl">Tier</div><select data-p="tier">${Object.keys(TIERS).map(t=>`<option value="${t}" ${String(t)===String(p.tier)?"selected":""}>Tier ${t}</option>`).join("")}</select></div></div>`}`;
+  const script=`<div class="row" style="margin-top:4px"><button data-act="importScript" style="flex:1">⇩ Paste PRISM script</button></div>
+  <div class="lbl">Brief / script</div><textarea data-p="brief" rows="7" placeholder="Paste the brief, script or call notes">${esc(p.brief)}</textarea>
+  ${S.sample?`<button class="primary" style="width:100%;margin-top:8px" data-act="break" ${S.busy.brk||overBudget()?"disabled":""}>${S.busy.brk?'<span class="spin"></span>Breaking into shots…':"✦ Break brief into shots"+estLabel("brk",(p.brief||"").length+2500)}</button><p class="hint">Adds shots after the last one. Nothing is overwritten.</p>`:`<p class="hint">Claude features are off in this view, so add shots by hand or paste a PRISM script.</p>`}`;
+  const cast=`${S.cast.map(castCard).join("")}<div class="row"><button data-act="addcast">+ Add model</button></div>${S.cast.length?`<p class="hint">Tag who's in each shot in its Continuity section. Check the contracts cover AI likeness.</p>`:`<p class="hint">Add each model or influencer with a face photo, dress and hair so every frame keeps them consistent.</p>`}`;
+  const prods=`${S.products.length?`<div class="pgrid">${S.products.map(pr=>`<div class="pcell"><div class="pimg" style="background-image:url('${imgUrl(pr.photo)}')"></div><span class="pno">Prd ${pr.no}</span><button class="pdel" data-delprod="${esc(pr.id)}" title="Remove">×</button><input data-prod="${esc(pr.id)}" value="${esc(pr.name)}" placeholder="Name"></div>`).join("")}</div>`:`<p class="hint">Upload the exact pieces the film must show.</p>`}<div class="row"><button data-act="addprod">+ Upload product photos</button></div>`;
+  const locs=`${S.locs.length?`<div class="pgrid">${S.locs.map(l=>`<div class="pcell wide"><div class="pimg" style="background-image:url('${imgUrl(l.photo)}')"></div><span class="lno">Loc ${l.no}</span><button class="pdel" data-delloc="${esc(l.id)}" title="Remove">×</button><input data-locn="${esc(l.id)}" value="${esc(l.name)}" placeholder="e.g. Living room"></div>`).join("")}</div>`:""}
+  <div class="drop" id="recceDrop" data-act="addloc"><b>Drop location photos here</b><br>or click to upload. Tag each shot with its location so frames match the real space.</div>`;
+  const look=`<div class="lbl">Set dressing</div><input data-p="setLoc" value="${esc(p.setLoc)}" placeholder="e.g. brass lamps, marigold garlands, cream drapes">
+  <div class="lbl">Time &amp; light</div><select data-p="tod">${opts(TODS,p.tod,"Choose")}</select>
+  <p class="hint">Each model's dress and hair are set in Cast. Everything here and there is locked into every frame unless a shot overrides it.</p>`;
+  const gen=`<select data-p="gen">${Object.keys(GENS).map(k=>`<option value="${k}" ${k===genOf()?"selected":""}>${GENS[k].label}</option>`).join("")}</select>
+  <p class="hint">${genOf()==="gemini"?"Free tier at gemini.google.com, with a daily image cap. Run one Gemini chat per film so faces stay consistent.":genOf()==="pollinations"?"Free, no login. It can't use reference photos, so faces, products and locations won't match.":genOf()==="canva"?"Canva's AI credits run out after a few images on a free plan.":"Attach the face, product and location photos there, then paste each prompt."}</p>`;
+  const treat=`<div class="grid2"><div><div class="lbl">Background</div><input data-p="bg" value="${esc(p.bg)}" placeholder="Cream #FFF7DE"></div><div><div class="lbl">Props</div><input data-p="props" value="${esc(p.props)}" placeholder="Brass diya, petals"></div></div>
+  <div class="grid2"><div><div class="lbl">Lights &amp; shadows</div><input data-p="light" value="${esc(p.light)}" placeholder="Hard key from left"></div><div><div class="lbl">Product placement</div><input data-p="place" value="${esc(p.place)}" placeholder="Right third"></div></div>
+  <div class="lbl">Look &amp; feel</div><textarea data-p="style" rows="3">${esc(p.style)}</textarea>
+  <div class="lbl">Other notes</div><textarea data-p="cast" rows="2" placeholder="Anything else the frames should know">${esc(p.cast)}</textarea>`;
+  el.innerHTML=grp("film","Film","",film)+grp("script","Script &amp; brief","",script)
+   +grp("cast","Cast",`${S.cast.length} model${S.cast.length===1?"":"s"}`,cast)
+   +grp("prods","Products",`${S.products.length}`,prods)
+   +grp("locs","Location photos",`${S.locs.length}`,locs)
+   +grp("look","Look &amp; continuity","locked",look)
+   +grp("gen","Frame generator",GENS[genOf()].short,gen)
+   +grp("treat","Treatment","in every prompt",treat)
+   +grp("danger","Danger zone","",`<button class="ghost danger" data-act="delproj" style="width:100%">${S.confirmDel?"Click again to delete this film":"Delete film"}</button>`);
 }
 function overlaySVG(s){
   const st=`stroke="#e3c27a" stroke-width="2" fill="none" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
@@ -793,45 +829,41 @@ function videoPrompt(s){
   const cam=`${s.size} shot, ${s.angle.toLowerCase()}, ${s.move==="Static"?"locked-off static camera":s.move.toLowerCase()+" camera move"}, ${s.lens}mm lens.`;
   const tr=[p.bg&&`background ${p.bg}`,p.props&&`props: ${p.props}`,p.light&&`lighting: ${p.light}`,p.place&&`product placement: ${p.place}`].filter(Boolean).join("; ");
   const pr=shotProds(s);
-  return [cam,s.action,shotLoc(s)?`Location: ${locLabel(shotLoc(s))}, as in the recce photo.`:"",pr.length?`Jewellery: ${pr.map(prodLabel).join(", ")}, exactly as in the product reference.`:`Hero product: GRT ${p.product||"Gold"} jewellery, sharp and readable.`,outfitOf(s)?`Wardrobe: ${outfitOf(s)}.`:"",continuityLock()?`Continuity: ${continuityLock()}.`:"",continuityLine(s),talent()?`Talent: ${talent()}.`:"",p.cast?`Characters: ${p.cast}`:"",tr?`Treatment: ${tr}.`:"",p.style?`Look: ${p.style}`:"",s.dlg?`Dialogue (lip-sync, as written): "${s.dlg}"`:"",s.vo?`On-screen super (English): "${s.vo}"`:"",`${s.duration}s, ${p.aspect||"16:9"}.`].filter(Boolean).join(" ");
+  return [cam,s.action,shotLoc(s)?`Location: ${locLabel(shotLoc(s))}, as in the location photo.`:"",pr.length?`Jewellery: ${pr.map(prodLabel).join(", ")}, exactly as in the product reference.`:`Hero product: GRT ${p.product||"Gold"} jewellery, sharp and readable.`,outfitOf(s)?`Wardrobe: ${outfitOf(s)}.`:"",continuityLock()?`Continuity: ${continuityLock()}.`:"",continuityLine(s),talentLine(s),p.cast?`Characters: ${p.cast}`:"",tr?`Treatment: ${tr}.`:"",p.style?`Look: ${p.style}`:"",s.dlg?`Dialogue (lip-sync, as written): "${s.dlg}"`:"",s.vo?`On-screen super (English): "${s.vo}"`:"",`${s.duration}s, ${p.aspect||"16:9"}.`].filter(Boolean).join(" ");
 }
+const LENS_NOTE={16:"ultra-wide",24:"wide",35:"natural",50:"standard",85:"portrait",100:"macro",135:"compressed"};
+function igrp(key,title,note,body){return `<details class="grp" data-igrp="${key}" ${S.igrp[key]?"open":""}><summary><span class="t">${title}</span>${note?`<span class="n">${note}</span>`:""}</summary><div class="body">${body}</div></details>`}
 function renderInspector(force){
   const el=$("#inspector");const s=selShot();
   if(!s){el.innerHTML=`<p class="muted" style="padding-top:14px">Select a shot in the Scenebuilder to set its camera and frame.</p>`;return}
-  const i=S.shots.indexOf(s);const busy=!!S.busy[s.id];
-  el.innerHTML=`
-  <div class="insHead"><b>Shot ${i+1}</b><select data-s="status">${Object.keys(STATUS).map(k=>`<option value="${k}" ${s.status===k?"selected":""}>${STATUS[k]}</option>`).join("")}</select></div>
-  <div class="lbl">Action / what we see</div><textarea data-s="action" rows="3" placeholder="What happens in this shot">${esc(s.action)}</textarea>
+  const i=S.shots.indexOf(s);const busy=!!S.busy[s.id];const fl=continuityFlags(s);const ms=castOf(s);
+  const script=`<div class="lbl">Action / what we see</div><textarea data-s="action" rows="3" placeholder="What happens in this shot">${esc(s.action)}</textarea>
   <div class="lbl">Dialogue / VO <span>as written</span></div><textarea data-s="dlg" rows="2" placeholder="Spoken line, in the script's language">${esc(s.dlg)}</textarea>
   <div class="lbl"><span>Super (English)</span>${needsQC(s)?'<span class="qc">TO QC</span>':""}</div><textarea data-s="vo" rows="2" placeholder="On-screen super in English">${esc(s.vo)}</textarea>
-  ${needsQC(s)?'<p class="hint warn">Mentions a number, offer or claim. Send it through Assetz-style QC before it goes to Yogesh.</p>':""}
-  <div class="sec">Continuity</div>
-  ${continuityFlags(s).map(x=>`<div class="flag">⚠ ${esc(x)}</div>`).join("")}
-  <div class="lbl">Location</div>${S.locs.length?`<div class="chips">${S.locs.map(l=>`<button class="chip tprod ${s.loc===l.id?"on":""}" data-tloc="${esc(l.id)}"><i style="background-image:url('${l.photo&&/^data:image\//.test(l.photo)?l.photo:""}')"></i>Loc ${l.no}${l.name?" · "+esc(l.name):""}</button>`).join("")}</div>`:`<p class="hint">Drop recce photos in the left panel to tag where this shot happens.</p>`}
-  <div class="lbl">Products in this shot</div>${S.products.length?`<div class="chips">${S.products.map(pr=>`<button class="chip tprod ${(s.prods||[]).includes(pr.id)?"on":""}" data-tprod="${esc(pr.id)}"><i style="background-image:url('${pr.photo&&/^data:image\//.test(pr.photo)?pr.photo:""}')"></i>Prd ${pr.no}${pr.name?" · "+esc(pr.name):""}</button>`).join("")}</div>`:`<p class="hint">Upload product photos in the left panel to tag them here.</p>`}
-  <div class="lbl"><span>Outfit</span><span>${s.outfit&&s.outfit.trim()?'<span class="warn">changed</span>':"locked"}</span></div><input data-s="outfit" value="${esc(s.outfit)}" placeholder="${esc(lookText()||"Same as the locked look")}">
-  <div class="lbl">Continuity note</div><input data-s="cont" value="${esc(s.cont)}" placeholder="e.g. picks up the diya from shot ${i}; turns left to right">
-  <div class="sec">Camera controls</div>
-  <div class="lbl">Shot size</div>${chips("size",SIZES,s.size)}
-  <div class="lbl">Angle</div>${chips("angle",ANGLES,s.angle)}
-  <div class="lbl">Movement</div>${chips("move",MOVES,s.move)}
-  <div class="lbl">Lens</div>${chips("lens",LENSES,s.lens)}
-  <div class="lbl"><span>Duration</span><span id="durV">${s.duration}s</span></div><input type="range" min="1" max="30" step="0.5" value="${s.duration}" data-s="duration">
-  <div class="sec">Frame</div>
-  <div class="row">${genOf()==="gemini"?`<button class="primary" data-copygem="${esc(s.id)}" style="flex:1">✦ Copy frame ${shotNo(s)} prompt for Gemini</button>`:`<a class="btnlink primary" href="${esc(genLink(s))}" target="_blank" rel="noopener" data-gen="${esc(s.id)}">✦ Generate in ${esc(GENS[genOf()].short)} ↗</a>`}</div>
-  <p class="hint">${genOf()==="gemini"?"Paste it into this film's Gemini chat (start one from ✦ Generate frames). Then copy Gemini's image and press Ctrl/Cmd+V here. Storyroom moves to the next shot.":genOf()==="pollinations"?"Opens the frame in a new tab. Right-click → Copy image, then click the frame here and press Ctrl/Cmd+V (or save it and drag it in).":`Copies the image prompt and opens ${esc(GENS[genOf()].short)}. ${genOf()!=="canva"?"Attach the influencer photo there, paste the prompt, then copy the result and paste it onto the frame here.":"Paste the prompt, then bring the frame back here."}`}</p>
-  <div class="row">${S.sample?`<button data-act="sketch" ${busy?"disabled":""}>${busy?'<span class="spin"></span>Sketching…':(s.sketch?"Re-sketch":"Pencil sketch")}</button>`:""}<button data-act="upload">Upload image</button></div>
-  ${frameSrc(s)?`<div class="row"><button class="ghost" data-act="clearframe">Remove frame</button></div>`:""}
-  ${s.canvaUrl&&/^https:\/\/([a-z0-9-]+\.)*canva\.com\//i.test(s.canvaUrl)?`<p style="margin:10px 0 0"><a class="lnk" href="${esc(s.canvaUrl)}" target="_blank" rel="noopener">Open Canva frame ↗</a></p>`:""}
-
-  <div class="sec">Image prompt <span>for any image generator</span></div>
-  <pre class="prompt">${esc(framePrompt(s))}</pre>
-  <div class="row"><button data-act="copyimg">Copy image prompt</button></div>
-  <div class="sec">Video prompt <span>for Flow / Veo, after approval</span></div>
-  <pre class="prompt" id="promptBox">${esc(videoPrompt(s))}</pre>
-  <div class="row"><button data-act="copyprompt">Copy prompt</button></div>
-  <div class="sec">Shot</div>
-  <div class="row"><button data-act="dup">Duplicate</button><button class="ghost danger" data-act="delshot">Delete</button></div>`;
+  ${needsQC(s)?'<p class="hint warn">Mentions a number, offer or claim. QC it before it goes to Yogesh.</p>':""}`;
+  const camera=`<div class="grid2"><div><div class="lbl">Shot size</div><select data-s="size">${opts(SIZES,s.size)}</select></div><div><div class="lbl">Angle</div><select data-s="angle">${opts(ANGLES,s.angle)}</select></div>
+  <div><div class="lbl">Movement</div><select data-s="move">${opts(MOVES,s.move,null,v=>(ICON[v]?ICON[v]+"  ":"")+v)}</select></div><div><div class="lbl">Lens</div><select data-s="lens">${opts(LENSES,s.lens,null,v=>v+"mm · "+(LENS_NOTE[v]||""))}</select></div></div>
+  <div class="lbl"><span>Duration</span><span id="durV">${s.duration}s</span></div><input type="range" min="1" max="30" step="0.5" value="${s.duration}" data-s="duration">`;
+  const castSel=S.cast.length?`<div class="chips">${S.cast.map(m=>`<button class="chip tprod ${ms.includes(m)?"on":""}" data-tcast="${esc(m.id)}"><i style="background-image:url('${imgUrl(m.photo)}')"></i>Model ${m.no}${m.name?" · "+esc(m.name):""}</button>`).join("")}</div>${S.cast.length===1&&!Array.isArray(s.cast)?'<p class="hint" style="margin-top:4px">Only one model, so she\'s in every shot unless you untick her.</p>':""}`:`<p class="hint">Add models in Cast (left panel).</p>`;
+  const cont=`${fl.map(x=>`<div class="flag">⚠ ${esc(x)}</div>`).join("")}
+  <div class="lbl">Who's in this shot</div>${castSel}
+  <div class="lbl">Location</div>${S.locs.length?`<select data-s="loc">${`<option value="">${S.locs.length===1?"Loc 1 (only location)":"Choose a location"}</option>`+S.locs.map(l=>`<option value="${esc(l.id)}" ${s.loc===l.id?"selected":""}>Loc ${l.no}${l.name?" · "+esc(l.name):""}</option>`).join("")}</select>`:`<p class="hint">Drop location photos in the left panel.</p>`}
+  <div class="lbl">Products in this shot</div>${S.products.length?`<div class="chips">${S.products.map(pr=>`<button class="chip tprod ${(s.prods||[]).includes(pr.id)?"on":""}" data-tprod="${esc(pr.id)}"><i style="background-image:url('${imgUrl(pr.photo)}')"></i>Prd ${pr.no}${pr.name?" · "+esc(pr.name):""}</button>`).join("")}</div>`:`<p class="hint">Upload product photos in the left panel.</p>`}
+  <div class="lbl"><span>Outfit</span><span>${s.outfit&&s.outfit.trim()?'<span class="warn">changed for this shot</span>':"from Cast"}</span></div><input data-s="outfit" value="${esc(s.outfit)}" placeholder="${esc(outfitOf(Object.assign({},s,{outfit:""}))||"Same as Cast")}">
+  <div class="lbl">Continuity note</div><input data-s="cont" value="${esc(s.cont)}" placeholder="e.g. Model 2 walks in from the left; picks up the diya from shot ${i}">`;
+  const frame=`<div class="row" style="margin-top:4px">${genOf()==="gemini"?`<button class="primary" data-copygem="${esc(s.id)}" style="flex:1">✦ Copy frame ${shotNo(s)} prompt for Gemini</button>`:`<a class="btnlink primary" href="${esc(genLink(s))}" target="_blank" rel="noopener" data-gen="${esc(s.id)}">✦ Generate in ${esc(GENS[genOf()].short)} ↗</a>`}</div>
+  <p class="hint">${genOf()==="gemini"?"Paste it into this film's Gemini chat (start one from ✦ Generate frames), then paste Gemini's image here with Ctrl/Cmd+V.":genOf()==="pollinations"?"Opens the frame in a new tab. Copy the image, click the frame here and press Ctrl/Cmd+V.":`Copies the prompt and opens ${esc(GENS[genOf()].short)}. Paste the result back here.`}</p>
+  <div class="row">${S.sample?`<button data-act="sketch" ${busy||overBudget()?"disabled":""}>${busy?'<span class="spin"></span>Sketching…':(s.sketch?"Re-sketch":"Pencil sketch")+estLabel("sketch",2000)}</button>`:""}<button data-act="upload">Upload image</button>${frameSrc(s)?`<button class="ghost" data-act="clearframe">Remove</button>`:""}</div>
+  ${s.canvaUrl&&/^https:\/\/([a-z0-9-]+\.)*canva\.com\//i.test(s.canvaUrl)?`<p style="margin:10px 0 0"><a class="lnk" href="${esc(s.canvaUrl)}" target="_blank" rel="noopener">Open Canva frame ↗</a></p>`:""}`;
+  const prompts=`<div class="lbl">Image prompt</div><pre class="prompt">${esc(framePrompt(s))}</pre><div class="row"><button data-act="copyimg">Copy image prompt</button></div>
+  <div class="lbl">Video prompt <span>Flow / Veo, after approval</span></div><pre class="prompt" id="promptBox">${esc(videoPrompt(s))}</pre><div class="row"><button data-act="copyprompt">Copy video prompt</button></div>`;
+  el.innerHTML=`<div class="insHead"><b>Shot ${i+1}</b><select data-s="status">${Object.keys(STATUS).map(k=>`<option value="${k}" ${s.status===k?"selected":""}>${STATUS[k]}</option>`).join("")}</select></div>`
+   +igrp("script","Script","",script)
+   +igrp("camera","Camera",`${s.size} · ${s.lens}mm`,camera)
+   +igrp("cont","Continuity",fl.length?`<span class="warn">⚠ ${fl.length}</span>`:"✓",cont)
+   +igrp("frame","Frame",frameSrc(s)?"✓ in":"",frame)
+   +igrp("prompts","Prompts","copy",prompts)
+   +`<div class="row" style="margin-top:12px"><button data-act="dup">Duplicate shot</button><button class="ghost danger" data-act="delshot">Delete shot</button></div>`;
 }
 function thumb(s){const src=frameSrc(s);return src?`<img alt="" src="${src}" draggable="false">`:""}
 function renderSB(){
@@ -913,13 +945,19 @@ function geminiModal(){
   <p class="hint">${done}/${S.shots.length} frames in. The free tier has a daily image cap that Google changes, so a 10-shot film may need two days, or two team members' accounts.</p>
   ${rows}<div class="row"><button data-close>Done</button></div>`);
 }
+document.addEventListener("toggle",e=>{const d=e.target;if(!d||!d.dataset)return;if(d.dataset.grp)S.grp[d.dataset.grp]=d.open;if(d.dataset.igrp)S.igrp[d.dataset.igrp]=d.open},true);
 document.addEventListener("click",e=>{
+  const tc=e.target.closest("[data-tcast]");if(tc){const s=selShot();if(!s)return;const id=tc.dataset.tcast;const cur=castOf(s).map(m=>m.id);const k=cur.indexOf(id);if(k>=0)cur.splice(k,1);else cur.push(id);saveShot(Object.assign({},s,{cast:cur}),300);renderInspector();renderSB();return}
+  const cp=e.target.closest("[data-castphoto]");if(cp){S.fileTarget="cast:"+cp.dataset.castphoto;$("#fileInput").click();return}
+  const cd=e.target.closest("[data-castdesc]");if(cd){describeCast(cd.dataset.castdesc);return}
+  const dc=e.target.closest("[data-delcast]");if(dc){const id=dc.dataset.delcast;if(dc.dataset.sure!=="1"){dc.dataset.sure="1";dc.textContent="?";toast("Click × again to remove this model.");return}S.cast=S.cast.filter(x=>x.id!==id);Store.delCast(S.pid,id);renderBrief();renderInspector();return}
   const tp=e.target.closest("[data-tprod]");if(tp){const s=selShot();if(!s)return;const id=tp.dataset.tprod;const cur=(s.prods||[]).slice();const k=cur.indexOf(id);if(k>=0)cur.splice(k,1);else cur.push(id);saveShot(Object.assign({},s,{prods:cur}),300);renderInspector();renderSB();return}
   const pc=e.target.closest("[data-pchip]");if(pc&&S.project){const k=pc.dataset.pchip,v=pc.dataset.v;S.project=Object.assign({},S.project,{[k]:S.project[k]===v?"":v});saveProject();renderBrief();renderInspector();return}
   const tl=e.target.closest("[data-tloc]");if(tl){const s=selShot();if(!s)return;const id=tl.dataset.tloc;saveShot(Object.assign({},s,{loc:s.loc===id?"":id}),300);renderInspector();renderSB();return}
-  const dl=e.target.closest("[data-delloc]");if(dl){const id=dl.dataset.delloc;if(dl.dataset.sure!=="1"){dl.dataset.sure="1";dl.textContent="?";toast("Click × again to remove this recce photo.");return}S.locs=S.locs.filter(x=>x.id!==id);Store.delLoc(S.pid,id);renderBrief();renderInspector();return}
+  const dl=e.target.closest("[data-delloc]");if(dl){const id=dl.dataset.delloc;if(dl.dataset.sure!=="1"){dl.dataset.sure="1";dl.textContent="?";toast("Click × again to remove this location photo.");return}S.locs=S.locs.filter(x=>x.id!==id);Store.delLoc(S.pid,id);renderBrief();renderInspector();return}
   const dp=e.target.closest("[data-delprod]");if(dp){const id=dp.dataset.delprod;if(dp.dataset.sure!=="1"){dp.dataset.sure="1";dp.textContent="?";toast("Click × again to remove this product.");return}S.products=S.products.filter(x=>x.id!==id);Store.delProduct(S.pid,id);renderBrief();renderInspector();return}
 });
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.castf){const m=castById(t.dataset.cid);if(!m)return;m[t.dataset.castf]=t.value;clearTimeout(timers["cm"+m.id]);timers["cm"+m.id]=setTimeout(()=>Store.putCast(S.pid,m.id,strip(m)),600);if(t.tagName==="SELECT")renderInspector();else{const pb=$("#promptBox");const sh=selShot();if(pb&&sh)pb.textContent=videoPrompt(sh)}}});
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.locn){const l=locById(t.dataset.locn);if(!l)return;l.name=t.value;clearTimeout(timers["lc"+l.id]);timers["lc"+l.id]=setTimeout(()=>Store.putLoc(S.pid,l.id,l),600)}});
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.prod){const pr=prodById(t.dataset.prod);if(!pr)return;pr.name=t.value;clearTimeout(timers["pr"+pr.id]);timers["pr"+pr.id]=setTimeout(()=>Store.putProduct(S.pid,pr.id,pr),600)}});
 document.addEventListener("click",e=>{const c=e.target.closest("[data-copygem]");if(!c)return;const sh=S.shots.find(x=>x.id===c.dataset.copygem);if(!sh)return;S.pasteTarget=sh.id;
@@ -932,16 +970,26 @@ document.addEventListener("paste",e=>{
   if(!S.pid||P)return;const t=e.target;if((t.tagName==="TEXTAREA"||t.tagName==="INPUT")&&!S.pasteTarget)return;
   const items=(e.clipboardData&&e.clipboardData.items)||[];for(const it of items){if(it.type&&it.type.startsWith("image/")){const f=it.getAsFile();if(f){e.preventDefault();const reopen=!$("#modal").classList.contains("hidden");if(S.pasteTarget){S.sel=S.pasteTarget;S.pasteTarget=null;closeModal()}setImage(f).then(()=>advance(reopen));return}}}
 });
-$("#fileInput").addEventListener("change",e=>{const fl=Array.from(e.target.files||[]);const f=fl[0];e.target.value="";const tgt=S.fileTarget;S.fileTarget=null;e.target.multiple=false;if(!f)return;if(tgt==="prod"){addProducts(fl);return}if(tgt==="loc"){addLocs(fl);return}if(tgt==="infl")setInfl(f);else setImage(f)});
+$("#fileInput").addEventListener("change",e=>{const fl=Array.from(e.target.files||[]);const f=fl[0];e.target.value="";const tgt=S.fileTarget;S.fileTarget=null;e.target.multiple=false;if(!f)return;if(tgt&&tgt.startsWith("cast:")){setCastPhoto(tgt.slice(5),f);return}if(tgt==="prod"){addProducts(fl);return}if(tgt==="loc"){addLocs(fl);return}if(tgt==="infl")setInfl(f);else setImage(f)});
 async function addLocs(files){let no=S.locs.reduce((m,x)=>Math.max(m,x.no||0),0);let n=0;
   for(const file of files.slice(0,12)){if(!/^image\//.test(file.type))continue;try{const d=await resizeImage(file);no+=1;const id=uid();const l={no,name:file.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").replace(/^(img|dsc|pxl)\s*\d+.*$/i,"").slice(0,40),photo:d,createdAt:Date.now()};S.locs.push(Object.assign({id},l));await Store.putLoc(S.pid,id,l);n++}catch(e){}}
-  renderBrief();renderInspector();renderSB();toast(n?`${n} recce photo${n>1?"s":""} added. Name them, then tag each shot's location.`:"Couldn't use those images.")}
+  renderBrief();renderInspector();renderSB();toast(n?`${n} location photo${n>1?"s":""} added. Name them, then tag each shot's location.`:"Couldn't use those images.")}
 document.addEventListener("dragover",e=>{const d=e.target.closest&&e.target.closest("#recceDrop");if(!d||S.dragId)return;e.preventDefault();d.classList.add("over")});
 document.addEventListener("dragleave",e=>{const d=e.target.closest&&e.target.closest("#recceDrop");if(d)d.classList.remove("over")});
 document.addEventListener("drop",e=>{const d=e.target.closest&&e.target.closest("#recceDrop");if(!d||S.dragId)return;e.preventDefault();d.classList.remove("over");const fl=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);if(fl.length)addLocs(fl)});
 async function addProducts(files){let no=S.products.reduce((m,x)=>Math.max(m,x.no||0),0);let n=0;
   for(const file of files.slice(0,20)){if(!/^image\//.test(file.type))continue;try{const d=await resizeImage(file);no+=1;const id=uid();const pr={no,name:file.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").slice(0,40),photo:d,createdAt:Date.now()};S.products.push(Object.assign({id},pr));await Store.putProduct(S.pid,id,pr);n++}catch(e){}}
   renderBrief();renderInspector();toast(n?`${n} product photo${n>1?"s":""} added. Name them, then tag them per shot.`:"Couldn't use those images.")}
+async function setCastPhoto(id,file){const m=castById(id);if(!m||!/^image\//.test(file.type)){toast("Pick an image file.");return}
+  try{m.photo=await resizeImage(file);await Store.putCast(S.pid,m.id,strip(m));renderBrief();renderInspector();toast(`Face photo saved for ${mLabel(m)}`)}catch(e){toast("Couldn't use that image.")}}
+async function describeCast(id){const m=castById(id);if(!S.sample||!m||!m.photo)return;if(!canSpend("desc"))return;S.busy["d"+id]=true;renderBrief();
+  try{let ok=false;try{const l=await S.sample.limits();ok=!!(l&&l.images)}catch(e){}
+    if(!ok){toast("Photo reading isn't available here. Type the look notes instead.");throw 0}
+    const DQ="Describe this person's appearance for an image-generation prompt so a model can keep them consistent across frames: approximate age range, face shape, skin tone, hair (length, texture, colour, style), eyebrows, distinctive features. One line, comma-separated, no names, no guesses about identity, ethnicity labels or personality.";
+    const r=await S.sample(DQ,{images:[dataUrlBlob(m.photo)],modelTier:"default"});meter("desc",DQ,String(r.text||""),1600,"Describe "+mLabel(m));
+    const t=String(r.text||"").trim().slice(0,400);if(t){m.look=t;await Store.putCast(S.pid,m.id,strip(m))}
+  }catch(e){if(e&&e.code)aiErr(e)}
+  delete S.busy["d"+id];renderBrief();renderInspector()}
 async function setInfl(file){
   if(!/^image\//.test(file.type)){toast("Pick an image file.");return}
   try{const d=await resizeImage(file);S.infl=Object.assign({},S.infl||{},{photo:d,updatedAt:Date.now()});renderBrief();const ok=await Store.putRef(S.pid,"influencer",S.infl);if(ok)toast("Influencer photo saved")}catch(e){toast("Couldn't use that image.")}
@@ -1039,6 +1087,7 @@ document.addEventListener("click",e=>{
       copyText(rows.map(r=>r.map(c=>String(c).replace(/[\t\n]+/g," ")).join("\t")).join("\n"),"Shot list");break}
     case"present":present();break;
     case"export":exportDeck();break;
+    case"addcast":{const no=S.cast.reduce((a,x)=>Math.max(a,x.no||0),0)+1;const id=uid();const m={no,name:"",look:"",photo:"",dress:"",dressColor:"",dressNote:"",hair:"",createdAt:Date.now()};S.cast.push(Object.assign({id},m));S.grp.cast=true;Store.putCast(S.pid,id,m);renderBrief();renderInspector();break}
     case"addloc":S.fileTarget="loc";$("#fileInput").multiple=true;$("#fileInput").click();break;
     case"addprod":S.fileTarget="prod";$("#fileInput").multiple=true;$("#fileInput").click();break;
     case"share":shareModal();break;
@@ -1060,7 +1109,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.p&&S.project){S.project=Object.assign({},S.project,{[t.dataset.p]:t.value});saveProject();if(t.dataset.p==="aspect")renderViewer();if(t.dataset.p==="kind"){renderBrief();renderTop()}if(t.dataset.p==="gen"){renderBrief();renderInspector()}if(["dress","dressNote","hair","setLoc","tod"].includes(t.dataset.p)){if(t.tagName==="SELECT")renderBrief();renderInspector()}if(t.dataset.p==="product"||t.dataset.p==="row"||t.dataset.p==="festival")renderTop();if(t.dataset.p==="name"||t.dataset.p==="client")renderTop();const pb=$("#promptBox");const s=selShot();if(pb&&s)pb.textContent=videoPrompt(s);return}
-  if(t.dataset.s){const s=selShot();if(!s)return;let v=t.value;if(t.dataset.s==="duration"){v=+v;const dv=$("#durV");if(dv)dv.textContent=v+"s"}
+  if(t.dataset.s){const s=selShot();if(!s)return;let v=t.value;if(t.dataset.s==="lens")v=+v;if(["size","angle","move","lens","loc"].includes(t.dataset.s)){saveShot(Object.assign({},s,{[t.dataset.s]:v}),200);renderViewer();renderSB.noScroll=true;renderSB();renderSB.noScroll=false;setTimeout(renderInspector,0);return}if(t.dataset.s==="duration"){v=+v;const dv=$("#durV");if(dv)dv.textContent=v+"s"}
     saveShot(Object.assign({},s,{[t.dataset.s]:v}),t.dataset.s==="status"?0:600);renderViewer();renderSB.noScroll=true;renderSB();renderSB.noScroll=false;const pb=$("#promptBox");if(pb)pb.textContent=videoPrompt(selShot())}
 });
 document.addEventListener("change",e=>{const t=e.target;if(t.dataset.p==="aspect"){renderViewer();renderSB()}});
