@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Storyroom — storyboard builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0d0f;--panel:#15171b;--panel2:#1c1f24;--line:#2a2e35;--text:#ece9e3;--muted:#8d929b;--acc:#ffb547;--acc2:#ffd58f;--ok:#5fd39a;--rev:#7aa7ff;--bad:#ff6b6b;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 Manrope,system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100vh}
+.top{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--line);background:#0f1013}
+.brand{font-weight:800;letter-spacing:.01em;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand i{width:18px;height:12px;border:2px solid var(--acc);border-radius:2px;display:inline-block;position:relative}
+.brand i:after{content:"";position:absolute;left:3px;top:2px;width:6px;height:4px;background:var(--acc)}
+.crumb{color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--text);font-weight:600}
+.topActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+button:hover:not(:disabled){border-color:#454b55}
+button.primary{background:var(--acc);color:#1a1205;border-color:var(--acc);font-weight:700}
+button.primary:hover:not(:disabled){background:var(--acc2)}
+button.ghost{background:transparent}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.45;cursor:default}
+input,textarea,select{font:inherit;color:var(--text);background:#0f1114;border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc)}
+textarea{resize:vertical}
+input[type=range]{padding:0;accent-color:var(--acc)}
+.lbl{display:flex;justify-content:space-between;font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:14px 0 6px}
+.sec{font-weight:700;font-size:13px;margin:22px 0 4px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.sec span{font-weight:400;color:var(--muted);font-size:12px}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.row>button{flex:1}
+.hidden{display:none!important}
+.banner{padding:8px 16px;background:#2a2110;color:var(--acc2);font-size:13px;border-bottom:1px solid #3d301a}
+/* home */
+.home{flex:1;overflow:auto;padding:32px clamp(16px,4vw,48px)}
+.homeHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.homeHead h1{margin:0 0 4px;font-size:28px;letter-spacing:-.01em}
+.homeHead p{margin:0;max-width:560px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+.pcard:hover{border-color:var(--acc);transform:translateY(-2px)}
+.pthumb{aspect-ratio:16/9;background:repeating-linear-gradient(135deg,#101215 0 10px,#0d0f12 10px 20px);display:flex;align-items:center;justify-content:center;position:relative}
+.pthumb .ar{position:absolute;top:8px;left:8px;font:11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;background:#0c0d0f}
+.pthumb .ini{font-size:30px;font-weight:800;color:#3a3f48;letter-spacing:.04em}
+.pmeta{padding:10px 12px 12px}
+.pmeta b{display:block;font-size:15px}
+.pmeta span{color:var(--muted);font-size:12px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:40px;text-align:center;color:var(--muted)}
+/* project */
+.project{flex:1;display:grid;grid-template-columns:290px minmax(0,1fr) 330px;grid-template-rows:minmax(0,1fr) 196px;min-height:0}
+.brief,.inspector{overflow:auto;padding:4px 16px 20px;background:var(--panel);border-right:1px solid var(--line);min-height:0}
+.inspector{border-right:0;border-left:1px solid var(--line)}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0;padding:16px 18px 10px;gap:10px}
+.viewerWrap{flex:1;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center}
+.viewer{position:relative;width:min(100cqw,calc(100cqh * var(--ar)));aspect-ratio:var(--arr);background:#08090a;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.viewer.drop{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.viewer img.frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.viewer svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);text-align:center;padding:20px}
+.ph b{color:var(--text);font-size:18px}
+.vb{position:absolute;font:11px var(--mono);background:rgba(8,9,10,.72);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:3px 7px;color:#ddd;backdrop-filter:blur(4px)}
+.vb.tl{top:8px;left:8px}.vb.tr{top:8px;right:8px;color:var(--acc2)}
+.vcap{position:absolute;left:8%;right:8%;bottom:6%;text-align:center;font-weight:600;font-size:clamp(11px,1.6cqw,17px);text-shadow:0 1px 3px #000,0 0 12px #000}
+.vnav{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap}
+.vnav .ct{font:12px var(--mono);color:var(--muted);min-width:110px;text-align:center}
+.tog.on{border-color:var(--acc);color:var(--acc2)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:4px 9px;border-radius:999px;font-size:12px;background:#101216;border:1px solid var(--line);color:#cfd2d8}
+.chip.on{background:var(--acc);color:#1a1205;border-color:var(--acc);font-weight:700}
+.insHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 2px}
+.insHead b{font-size:17px}
+.insHead select{width:auto}
+pre.prompt{white-space:pre-wrap;font:12px/1.5 var(--mono);background:#0f1114;border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0 0;color:#cfd2d8;max-height:180px;overflow:auto}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+/* scenebuilder */
+.sb{grid-column:1/-1;border-top:1px solid var(--line);background:#0f1013;display:flex;flex-direction:column;min-height:0;padding:10px 16px 8px}
+.sbHead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sbHead b{font-size:14px}
+.sbHead .sp{flex:1}
+.track{flex:1;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:10px 0 4px;align-items:stretch;min-height:0}
+.clip{flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel);overflow:hidden;position:relative;cursor:pointer;display:flex;flex-direction:column;user-select:none}
+.clip.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.clip.dragging{opacity:.4}
+.clip.dropB{box-shadow:-4px 0 0 var(--acc)}
+.clip.dropA{box-shadow:4px 0 0 var(--acc)}
+.clip .th{flex:1;background:#08090a;position:relative;overflow:hidden}
+.clip .th img{width:100%;height:100%;object-fit:cover;display:block}
+.clip .num{position:absolute;top:4px;left:5px;font:600 11px var(--mono);background:rgba(0,0,0,.65);border-radius:3px;padding:0 4px}
+.clip .mv{position:absolute;top:4px;right:5px;font:11px var(--mono);color:var(--acc2);background:rgba(0,0,0,.65);border-radius:3px;padding:0 4px}
+.clip .act{position:absolute;inset:auto 5px 4px 5px;font-size:10.5px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip .cap{font:11px var(--mono);padding:4px 7px;display:flex;justify-content:space-between;color:var(--muted);gap:6px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:#666}
+.dot.review{background:var(--rev)}.dot.approved{background:var(--ok)}
+.addClip{flex:none;width:70px;font-size:22px;color:var(--muted);border-style:dashed;background:transparent}
+/* present */
+.present{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.pframe{position:relative;background:#0a0a0a;overflow:hidden;border-radius:4px}
+.pframe img{width:100%;height:100%;object-fit:cover;display:block}
+.pcap{position:absolute;left:6%;right:6%;bottom:6%;text-align:center;font-weight:700;font-size:clamp(14px,2.2vw,26px);text-shadow:0 2px 4px #000,0 0 18px #000}
+.pbar{display:flex;gap:3px;width:min(92vw,1100px)}
+.pbar div{height:4px;background:#333;border-radius:2px;overflow:hidden}
+.pbar div i{display:block;height:100%;background:var(--acc);width:0}
+.pctl{display:flex;gap:8px;align-items:center;color:var(--muted);font:12px var(--mono)}
+/* modal & toast */
+.modalBack{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:min(560px,100%);max-height:90vh;overflow:auto}
+.modal h2{margin:0 0 6px;font-size:19px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#22252b;border:1px solid var(--line);border-radius:10px;padding:10px 16px;opacity:0;pointer-events:none;transition:.2s;z-index:70;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:1050px){.project{grid-template-columns:240px minmax(0,1fr) 290px}}
+@media (max-width:820px){.project{display:flex;flex-direction:column;overflow:auto}.brief,.inspector{border:0;overflow:visible}.stage{min-height:60vh}.sb{min-height:200px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand" id="homeBtn"><i></i>Storyroom</div>
+    <div class="crumb" id="crumb"></div>
+    <div class="topActions" id="topActions"></div>
+  </header>
+  <div id="banner" class="banner hidden"></div>
+  <main id="home" class="home"></main>
+  <main id="project" class="project hidden">
+    <aside class="brief" id="briefPane"></aside>
+    <section class="stage">
+      <div class="viewerWrap"><div class="viewer" id="viewer"></div></div>
+      <div class="vnav" id="vnav"></div>
+    </section>
+    <aside class="inspector" id="inspector"></aside>
+    <footer class="sb" id="sb"></footer>
+  </main>
+</div>
+<div id="present" class="present hidden"></div>
+<div id="modal" class="modalBack hidden"></div>
+<div id="toast" class="toast"></div>
+<input type="file" id="fileInput" accept="image/*" hidden>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-5);
+const SIZES=["Extreme wide","Wide","Full","Medium","Medium close-up","Close-up","Extreme close-up","Insert"];
+const ANGLES=["Eye level","Low angle","High angle","Overhead","Dutch tilt","Over the shoulder","POV"];
+const MOVES=["Static","Pan left","Pan right","Tilt up","Tilt down","Dolly in","Dolly out","Truck left","Truck right","Crane up","Crane down","Orbit","Handheld","Drone / aerial","Zoom in","Rack focus"];
+const LENSES=[16,24,35,50,85,135];
+const ICON={"Static":"■","Pan left":"←","Pan right":"→","Tilt up":"↑","Tilt down":"↓","Dolly in":"⇥","Dolly out":"⇤","Truck left":"⇠","Truck right":"⇢","Crane up":"⇡","Crane down":"⇣","Orbit":"↻","Handheld":"≈","Drone / aerial":"✈","Zoom in":"⊕","Rack focus":"◎"};
+const ASPECTS={"16:9":[1600,900],"9:16":[900,1600],"1:1":[1200,1200],"4:5":[1080,1350]};
+const STATUS={draft:"Draft",review:"For review",approved:"Approved"};
+const S={db:null,sample:null,projects:null,pid:null,project:null,shots:[],shotsLoaded:false,sel:null,unsub:[],pending:{},projPending:false,guides:true,overlay:true,busy:{},dragId:null};
+let Store=null;
+
+/* ---------- helpers ---------- */
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),3200)}
+function banner(m){const b=$("#banner");if(!m){b.classList.add("hidden");return}b.textContent=m;b.classList.remove("hidden")}
+function strip(o){const c=Object.assign({},o);delete c.id;return c}
+function fmtTime(sec){sec=Math.round(sec||0);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function ago(ts){if(!ts)return"";const d=(Date.now()-ts)/1000;if(d<60)return"just now";if(d<3600)return Math.floor(d/60)+"m ago";if(d<86400)return Math.floor(d/3600)+"h ago";return Math.floor(d/86400)+"d ago"}
+function arOf(p){return ASPECTS[(p&&p.aspect)||"16:9"]||ASPECTS["16:9"]}
+function runtime(){return S.shots.reduce((a,s)=>a+(+s.duration||0),0)}
+function pick(v,list,def){return list.includes(v)?v:def}
+function frameSrc(s){
+  if(s.image&&/^data:image\/(jpeg|png|webp);/.test(s.image))return s.image;
+  if(s.sketch)return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(s.sketch);
+  return "";
+}
+function isTyping(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")}
+async function copyText(text,label){
+  try{await navigator.clipboard.writeText(text);toast((label||"Copied")+" to clipboard")}
+  catch(e){openModal(`<h2>${esc(label||"Copy")}</h2><p class="muted small">Your browser blocked the clipboard. Select all and copy.</p><textarea rows="12" id="copyArea">${esc(text)}</textarea><div class="row"><button data-close>Close</button></div>`);const a=$("#copyArea");a.focus();a.select()}
+}
+function writeErr(e){
+  const c=e&&e.code;
+  if(c==="invalid_argument")toast("Couldn't save. You may have view-only access, or the frame is too large.");
+  else if(c==="quota_exceeded")toast("Storage is full. Delete old projects or frames to keep saving.");
+  else if(c==="resource_exhausted")toast("Saving too fast. Give it a second.");
+  else if(c==="revoked")toast("Access changed. Reload to continue.");
+  else toast("Couldn't save just now. Try again.");
+  return false;
+}
+
+/* ---------- stores ---------- */
+const chains={};
+function queued(path,fn){const p=(chains[path]||Promise.resolve()).then(fn).then(()=>true,writeErr);chains[path]=p;return p}
+const DBStore={
+  subProjects(cb,err){return S.db.collection("projects").orderBy("updatedAt","desc").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data())),s.metadata),err)},
+  subProject(pid,cb,err){return S.db.doc("projects/"+pid).onSnapshot(s=>cb(s.exists?Object.assign({id:s.id},s.data()):null,s.metadata),err)},
+  subShots(pid,cb,err){return S.db.collection("projects/"+pid+"/shots").orderBy("order").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data())),s.metadata),err)},
+  putProject(pid,o){return queued("projects/"+pid,()=>S.db.doc("projects/"+pid).set(strip(o)))},
+  putShot(pid,sid,o){const p="projects/"+pid+"/shots/"+sid;return queued(p,()=>S.db.doc(p).set(strip(o)))},
+  delShot(pid,sid){const p="projects/"+pid+"/shots/"+sid;return queued(p,()=>S.db.doc(p).delete())},
+  async delProject(pid){try{const snap=await S.db.collection("projects/"+pid+"/shots").get();for(const d of snap.docs)await S.db.doc("projects/"+pid+"/shots/"+d.id).delete();await S.db.doc("projects/"+pid).delete();return true}catch(e){return writeErr(e)}}
+};
+const LocalStore=(function(){
+  let d=null;try{d=JSON.parse(localStorage.getItem("storyroom-v1"))}catch(e){}
+  d=d&&d.projects?d:{projects:{}};
+  const subs=new Set();
+  const persist=()=>{try{localStorage.setItem("storyroom-v1",JSON.stringify(d))}catch(e){toast("This browser couldn't save. Storage may be full.")}subs.forEach(f=>f())};
+  const sub=f=>{subs.add(f);setTimeout(f,0);return()=>subs.delete(f)};
+  const meta={fromCache:false};
+  const noShots=p=>{const c=Object.assign({},p);delete c.shots;return c};
+  return{
+    subProjects(cb){return sub(()=>cb(Object.keys(d.projects).map(id=>Object.assign({id},noShots(d.projects[id]))).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)),meta))},
+    subProject(pid,cb){return sub(()=>{const p=d.projects[pid];cb(p?Object.assign({id:pid},noShots(p)):null,meta)})},
+    subShots(pid,cb){return sub(()=>{const p=d.projects[pid];const sh=p&&p.shots?p.shots:{};cb(Object.keys(sh).map(id=>Object.assign({id},sh[id])).sort((a,b)=>a.order-b.order),meta)})},
+    async putProject(pid,o){const prev=d.projects[pid]||{};d.projects[pid]=Object.assign(strip(o),{shots:prev.shots||{}});persist();return true},
+    async putShot(pid,sid,o){const p=d.projects[pid];if(!p)return false;p.shots=p.shots||{};p.shots[sid]=strip(o);persist();return true},
+    async delShot(pid,sid){const p=d.projects[pid];if(p&&p.shots)delete p.shots[sid];persist();return true},
+    async delProject(pid){delete d.projects[pid];persist();return true}
+  };
+})();
+
+/* ---------- saving ---------- */
+const timers={};
+function saveShot(shot,delay){
+  S.pending[shot.id]=shot;
+  const i=S.shots.findIndex(x=>x.id===shot.id);if(i>=0)S.shots[i]=shot;
+  clearTimeout(timers[shot.id]);
+  const pid=S.pid;
+  timers[shot.id]=setTimeout(async()=>{
+    const s=S.pending[shot.id];if(!s)return;
+    await Store.putShot(pid,s.id,s);
+    if(S.pending[shot.id]===s)delete S.pending[shot.id];
+    touchProject();
+  },delay==null?600:delay);
+}
+function saveProject(delay){
+  if(!S.project)return;
+  S.projPending=true;clearTimeout(timers._p);
+  const pid=S.pid;
+  timers._p=setTimeout(async()=>{
+    const p=Object.assign({},S.project,{updatedAt:Date.now(),shotCount:S.shots.length,runtime:runtime()});
+    await Store.putProject(pid,p);S.projPending=false;
+  },delay==null?700:delay);
+}
+function touchProject(){
+  if(!S.project)return;
+  if(S.project.shotCount===S.shots.length&&S.project.runtime===runtime()&&Date.now()-(S.project.updatedAt||0)<60000)return;
+  saveProject(1500);
+}
+
+/* ---------- AI (Claude) ---------- */
+function aiErr(e){
+  const c=e&&e.code;
+  if(c==="not_granted"){S.sample=null;toast("Claude isn't available in this view.");renderProject()}
+  else if(c==="rate_limited")toast("Claude is busy. Try again in a minute.");
+  else toast("Claude couldn't finish that. Try again.");
+}
+async function askJSON(prompt){
+  if(typeof S.sample.json==="function"){
+    try{return await S.sample.json(prompt,{modelTier:"default"})}catch(e){if(e&&e.code)throw e}
+  }
+  const r=await S.sample(prompt,{modelTier:"default"});
+  const m=String(r.text||"").match(/\{[\s\S]*\}/);if(!m)throw new Error("no json");
+  return JSON.parse(m[0]);
+}
+function normShot(o){
+  o=o||{};
+  let lens=+o.lens;if(!LENSES.includes(lens))lens=LENSES.reduce((a,b)=>Math.abs(b-lens)<Math.abs(a-lens)?b:a,35);
+  let dur=+o.duration;if(!(dur>0))dur=4;dur=Math.min(15,Math.max(1,Math.round(dur*2)/2));
+  return{action:String(o.action||"").slice(0,600),vo:String(o.vo||"").slice(0,300),size:pick(o.size,SIZES,"Medium"),angle:pick(o.angle,ANGLES,"Eye level"),move:pick(o.move,MOVES,"Static"),lens,duration:dur};
+}
+const SPEC=`"size": one of ${JSON.stringify(SIZES)}, "angle": one of ${JSON.stringify(ANGLES)}, "move": one of ${JSON.stringify(MOVES)}, "lens": one of ${JSON.stringify(LENSES)}, "duration": seconds between 1 and 15`;
+function ctx(){const p=S.project||{};return `Format: ${p.aspect||"16:9"} video.\nBrief / script:\n${p.brief||"(none)"}\nLook & feel: ${p.style||"(none)"}\nCharacters & ingredients: ${p.cast||"(none)"}`}
+
+async function breakBrief(){
+  if(!S.sample||!S.project)return;
+  if(!(S.project.brief||"").trim()){toast("Add a brief or script first.");return}
+  S.busy.brk=true;renderBrief();
+  try{
+    const res=await askJSON(`You are a commercial director breaking an ad brief into a storyboard shot list.\n${ctx()}\n\nReturn JSON only, no prose: {"shots":[{"action": what we see in 1-2 vivid sentences, "vo": VO line or on-screen super for this shot or "", ${SPEC}}]}\nAim for 6-12 shots unless the brief implies otherwise. Match any total duration in the brief. Vary shot sizes and movement with purpose: open strong, land the product, end on the brand moment.`);
+    const list=(res&&res.shots)||[];
+    if(!list.length)throw new Error("empty");
+    let base=S.shots.length?S.shots[S.shots.length-1].order:0;
+    const made=[];
+    for(const o of list.slice(0,30)){base+=1;const s=Object.assign(blankShot(base),normShot(o));made.push(s);S.shots.push(s);await Store.putShot(S.pid,s.id,s)}
+    S.sel=made[0].id;toast(`Added ${made.length} shots`);touchProject();renderProject();
+  }catch(e){aiErr(e)}
+  S.busy.brk=false;renderBrief();
+}
+async function extendShot(){
+  if(!S.sample)return;
+  const cur=selShot();const i=S.shots.indexOf(cur);const nxt=S.shots[i+1];
+  S.busy.ext=true;renderSB();
+  try{
+    const res=await askJSON(`You are a commercial director continuing a storyboard.\n${ctx()}\n\n${cur?`Current shot:\n${JSON.stringify(normShot(cur))}`:"There are no shots yet: write the opening shot."}\n${nxt?`The shot after it (the new shot must bridge to this):\n${JSON.stringify(normShot(nxt))}`:""}\n\nWrite the NEXT shot that continues directly from the current one: keep continuity of action, screen direction, characters and light. Choose a camera setup that cuts well from the current shot.\nReturn JSON only: {"shot":{"action":..., "vo":..., ${SPEC}}}`);
+    const o=normShot(res&&res.shot);
+    const order=cur?(nxt?(cur.order+nxt.order)/2:cur.order+1):1;
+    const s=Object.assign(blankShot(order),o);
+    S.shots.splice(cur?i+1:S.shots.length,0,s);S.sel=s.id;
+    await Store.putShot(S.pid,s.id,s);touchProject();renderProject();
+  }catch(e){aiErr(e)}
+  S.busy.ext=false;renderSB();
+}
+function cleanSVG(txt){
+  const a=txt.indexOf("<svg"),b=txt.lastIndexOf("</svg>");if(a<0||b<0)return null;
+  const raw=txt.slice(a,b+6);
+  const doc=new DOMParser().parseFromString(raw,"image/svg+xml");
+  if(doc.querySelector("parsererror"))return null;
+  doc.querySelectorAll("script,foreignObject,image,iframe,use,a,style,animate,set").forEach(n=>n.remove());
+  doc.querySelectorAll("*").forEach(n=>{[...n.attributes].forEach(at=>{if(/^on/i.test(at.name)||/href$/i.test(at.name))n.removeAttribute(at.name)})});
+  const svg=doc.documentElement;if(svg.nodeName.toLowerCase()!=="svg")return null;
+  svg.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  const out=new XMLSerializer().serializeToString(svg);
+  return out.length<150000?out:null;
+}
+async function sketchFrame(){
+  const s=selShot();if(!s||!S.sample)return;
+  const [W,H]=arOf(S.project);const id=s.id;
+  S.busy[id]=true;renderInspector(true);
+  try{
+    const r=await S.sample(`You are a storyboard artist. Draw ONE storyboard frame as a single SVG.\nRules:\n- Output only SVG markup starting with <svg and ending with </svg>. No prose, no code fences.\n- Use viewBox="0 0 ${W} ${H}" width="${W}" height="${H}".\n- Style: rough pencil storyboard sketch. Start with a full-size paper rect (#f3f0e8). Draw with dark grey strokes (#2b2b2b, #5a5a5a), stroke-linecap round, stroke widths 3-8, and a few flat grey fills (#d8d3c6, #bfb8a8) for shadow masses. No colour, no gradients, no filters, no text, no images, no scripts.\n- The composition MUST honour the camera: shot size "${s.size}", angle "${s.angle}", lens ${s.lens}mm${s.move!=="Static"?`, start frame of a ${s.move.toLowerCase()} move`:""}. Use rule-of-thirds placement and perspective lines that match the angle. Simple readable figures (head, shoulders, hands, gesture), key props and set lines.\n- Keep it under about 90 elements.\n\nScene: ${s.action||"(no description: draw an establishing frame for the brief)"}\nMood (shape and light only): ${(S.project&&S.project.style)||"cinematic"}\nCharacters: ${(S.project&&S.project.cast)||"as described in the scene"}`,{modelTier:"default"});
+    const svg=cleanSVG(String(r.text||""));
+    if(!svg)throw new Error("bad svg");
+    const cur=S.shots.find(x=>x.id===id);
+    if(cur){const n=Object.assign({},cur,{sketch:svg,image:""});saveShot(n,0)}
+  }catch(e){aiErr(e)}
+  delete S.busy[id];renderProject();
+}
+
+/* ---------- shots ---------- */
+function blankShot(order){return{id:uid(),order:order,action:"",vo:"",size:"Medium",angle:"Eye level",move:"Static",lens:35,duration:4,status:"draft",sketch:"",image:"",createdAt:Date.now()}}
+function selShot(){return S.shots.find(x=>x.id===S.sel)||null}
+function addShot(){
+  const order=S.shots.length?S.shots[S.shots.length-1].order+1:1;
+  const s=blankShot(order);S.shots.push(s);S.sel=s.id;Store.putShot(S.pid,s.id,s).then(touchProject);renderProject();
+  setTimeout(()=>{const t=$("#inspector textarea[data-s=action]");if(t)t.focus()},50);
+}
+function dupShot(){
+  const s=selShot();if(!s)return;const i=S.shots.indexOf(s);const nxt=S.shots[i+1];
+  const c=Object.assign({},s,{id:uid(),order:nxt?(s.order+nxt.order)/2:s.order+1,status:"draft",createdAt:Date.now()});
+  S.shots.splice(i+1,0,c);S.sel=c.id;Store.putShot(S.pid,c.id,c).then(touchProject);renderProject();
+}
+function delShot(){
+  const s=selShot();if(!s)return;const i=S.shots.indexOf(s);
+  S.shots.splice(i,1);delete S.pending[s.id];clearTimeout(timers[s.id]);
+  S.sel=(S.shots[i]||S.shots[i-1]||{}).id||null;
+  Store.delShot(S.pid,s.id).then(touchProject);renderProject();toast("Shot deleted");
+}
+function moveShot(dragId,targetId,before){
+  if(dragId===targetId)return;
+  const d=S.shots.find(x=>x.id===dragId);if(!d)return;
+  const rest=S.shots.filter(x=>x.id!==dragId);
+  let pos=rest.findIndex(x=>x.id===targetId);if(pos<0)return;if(!before)pos+=1;
+  const prev=rest[pos-1],next=rest[pos];
+  const order=prev&&next?(prev.order+next.order)/2:prev?prev.order+1:next?next.order-1:0;
+  const n=Object.assign({},d,{order});rest.splice(pos,0,n);S.shots=rest;saveShot(n,0);renderProject();
+}
+
+/* ---------- rendering: home ---------- */
+function showView(v){$("#home").classList.toggle("hidden",v!=="home");$("#project").classList.toggle("hidden",v!=="project")}
+function renderHome(){
+  showView("home");
+  $("#crumb").innerHTML="";
+  $("#topActions").innerHTML="";
+  const ps=S.projects;
+  let body;
+  if(ps==null)body=`<div class="empty"><span class="spin"></span>Loading storyboards…</div>`;
+  else if(!ps.length)body=`<div class="empty"><p style="font-size:16px;color:var(--text);margin:0 0 6px">No storyboards yet</p><p style="margin:0 0 16px">Start one from a client brief. Claude breaks it into shots, then you work out camera and frames in the Scenebuilder.</p><button class="primary" data-act="new">+ New storyboard</button></div>`;
+  else body=`<div class="grid">${ps.map(p=>{const ini=(p.client||p.name||"?").split(/\s+/).map(w=>w[0]).join("").slice(0,3).toUpperCase();return`<div class="pcard" data-open="${esc(p.id)}"><div class="pthumb"><span class="ar">${esc(p.aspect||"16:9")}</span><span class="ini">${esc(ini)}</span></div><div class="pmeta"><b>${esc(p.name||"Untitled")}</b><span>${esc(p.client||"No client")} · ${p.shotCount||0} shots · ${fmtTime(p.runtime)} · ${esc(ago(p.updatedAt))}</span></div></div>`}).join("")}</div>`;
+  $("#home").innerHTML=`<div class="homeHead"><div><h1>Storyboards</h1><p class="muted">Shared with the production team. Boards are free to build; take approved shots to Flow or Veo when it's time for video.</p></div>${ps&&ps.length?`<button class="primary" data-act="new">+ New storyboard</button>`:""}</div>${body}`;
+}
+function newProjectModal(){
+  openModal(`<h2>New storyboard</h2><p class="muted small" style="margin:0 0 4px">You can change all of this later.</p>
+  <div class="lbl">Project name</div><input id="npName" placeholder="Diwali launch film">
+  <div class="lbl">Client</div><input id="npClient" placeholder="Client name">
+  <div class="lbl">Format</div><select id="npAspect">${Object.keys(ASPECTS).map(a=>`<option>${a}</option>`).join("")}</select>
+  <div class="lbl">Brief or script (optional)</div><textarea id="npBrief" rows="6" placeholder="Paste the brief, script or your voice-note notes"></textarea>
+  ${S.sample?`<label class="small" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="npBreak" checked style="width:auto"> Break the brief into shots with Claude</label>`:""}
+  <div class="row"><button data-close>Cancel</button><button class="primary" id="npCreate">Create</button></div>`);
+  setTimeout(()=>$("#npName").focus(),30);
+}
+async function createProject(){
+  const name=$("#npName").value.trim()||"Untitled storyboard";
+  const p={name,client:$("#npClient").value.trim(),aspect:$("#npAspect").value,brief:$("#npBrief").value.trim(),style:"",cast:"",createdAt:Date.now(),updatedAt:Date.now(),shotCount:0,runtime:0};
+  const doBreak=$("#npBreak")&&$("#npBreak").checked&&p.brief;
+  const pid=uid();closeModal();
+  const ok=await Store.putProject(pid,p);if(!ok)return;
+  openProject(pid,Object.assign({id:pid},p));
+  if(doBreak)setTimeout(breakBrief,300);
+}
+
+/* ---------- rendering: project ---------- */
+function openProject(pid,initial){
+  S.unsub.forEach(f=>{try{f()}catch(e){}});S.unsub=[];
+  S.pid=pid;S.project=initial||null;S.shots=[];S.shotsLoaded=false;S.sel=null;S.pending={};
+  if(location.hash!=="#p-"+pid){try{history.replaceState(null,"","#p-"+pid)}catch(e){location.hash="p-"+pid}}
+  showView("project");renderProject();
+  const tm=setTimeout(()=>{if(!S.shotsLoaded)banner("Can't reach saved data yet. What you see may be out of date.")},10000);
+  S.unsub.push(Store.subProject(pid,(p,meta)=>{
+    if(S.pid!==pid)return;
+    if(!p){if(meta&&!meta.fromCache&&!S.projPending){toast("That storyboard was deleted.");goHome()}return}
+    if(S.projPending)return;
+    S.project=p;renderTop();if(!$("#briefPane").contains(document.activeElement))renderBrief();renderViewer();
+  },e=>toast("Lost connection to this storyboard.")));
+  S.unsub.push(Store.subShots(pid,(list,meta)=>{
+    if(S.pid!==pid)return;
+    if(!meta||!meta.fromCache){S.shotsLoaded=true;clearTimeout(tm);banner(S.db?"":localNote())}
+    const ids=new Set(list.map(s=>s.id));
+    const merged=list.map(s=>S.pending[s.id]||s);
+    Object.keys(S.pending).forEach(k=>{if(!ids.has(k))merged.push(S.pending[k])});
+    merged.sort((a,b)=>a.order-b.order);
+    S.shots=merged;
+    if(!selShot())S.sel=S.shots[0]?S.shots[0].id:null;
+    renderTop();renderViewer();renderSB();
+    if(!$("#inspector").contains(document.activeElement))renderInspector();
+  },e=>{clearTimeout(tm);toast("Lost connection to the shots.")}));
+}
+function goHome(){
+  S.unsub.forEach(f=>{try{f()}catch(e){}});S.unsub=[];S.pid=null;S.project=null;
+  try{history.replaceState(null,"","#")}catch(e){}
+  renderHome();
+}
+function renderProject(){renderTop();renderBrief();renderViewer();renderInspector();renderSB()}
+function renderTop(){
+  if(!S.pid)return;
+  const p=S.project||{};
+  $("#crumb").innerHTML=`<b>${esc(p.name||"Loading…")}</b>${p.client?" · "+esc(p.client):""}`;
+  const has=S.shots.length>0;
+  $("#topActions").innerHTML=`<button data-act="shotlist" ${has?"":"disabled"} title="Copy as a table to paste into Sheets">Copy shot list</button><button data-act="prompts" ${has?"":"disabled"} title="Video prompts for Flow / Veo">Copy all prompts</button><button class="primary" data-act="present" ${has?"":"disabled"}>▶ Play animatic</button>`;
+}
+function renderBrief(){
+  const p=S.project;const el=$("#briefPane");
+  if(!p){el.innerHTML=`<p class="muted" style="padding-top:14px"><span class="spin"></span>Loading…</p>`;return}
+  el.innerHTML=`
+  <div class="lbl">Project name</div><input data-p="name" value="${esc(p.name)}">
+  <div class="lbl">Client</div><input data-p="client" value="${esc(p.client)}">
+  <div class="lbl">Format</div><select data-p="aspect">${Object.keys(ASPECTS).map(a=>`<option ${a===(p.aspect||"16:9")?"selected":""}>${a}</option>`).join("")}</select>
+  <div class="lbl">Brief / script</div><textarea data-p="brief" rows="9" placeholder="Paste the brief, script or call notes">${esc(p.brief)}</textarea>
+  ${S.sample?`<button class="primary" style="width:100%;margin-top:8px" data-act="break" ${S.busy.brk?"disabled":""}>${S.busy.brk?'<span class="spin"></span>Breaking into shots…':"✦ Break brief into shots"}</button><p class="hint">Adds shots after the last one. Nothing is overwritten.</p>`:`<p class="hint">Claude features are off in this view, so add shots by hand.</p>`}
+  <div class="sec">Ingredients <span>reused in every prompt</span></div>
+  <div class="lbl">Look &amp; feel</div><textarea data-p="style" rows="3" placeholder="e.g. warm golden-hour light, 35mm film grain, festive South Indian palette">${esc(p.style)}</textarea>
+  <div class="lbl">Characters &amp; product</div><textarea data-p="cast" rows="4" placeholder="Asha: 30s, maroon silk saree, gold temple necklace. Product: 22K gold bangle set">${esc(p.cast)}</textarea>
+  <div class="sec">Danger zone</div>
+  <button class="ghost danger" data-act="delproj" style="width:100%">${S.confirmDel?"Click again to delete this storyboard":"Delete storyboard"}</button>`;
+}
+function overlaySVG(s){
+  const st=`stroke="#ffb547" stroke-width="2" fill="none" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+  let g="";
+  if(S.guides)g+=`<g stroke="rgba(255,255,255,.16)" stroke-width="1"><line x1="33.33" y1="0" x2="33.33" y2="100" vector-effect="non-scaling-stroke"/><line x1="66.66" y1="0" x2="66.66" y2="100" vector-effect="non-scaling-stroke"/><line x1="0" y1="33.33" x2="100" y2="33.33" vector-effect="non-scaling-stroke"/><line x1="0" y1="66.66" x2="100" y2="66.66" vector-effect="non-scaling-stroke"/></g>`;
+  if(S.overlay){
+    const m=s.move;const ah=(x1,y1,x2,y2)=>{const a=Math.atan2(y2-y1,x2-x1),L=3.2;return`<path d="M${x1} ${y1} L${x2} ${y2} M${x2-L*Math.cos(a-0.5)} ${y2-L*Math.sin(a-0.5)} L${x2} ${y2} L${x2-L*Math.cos(a+0.5)} ${y2-L*Math.sin(a+0.5)}" ${st}/>`};
+    if(m==="Pan left"||m==="Truck left")g+=ah(68,50,32,50);
+    else if(m==="Pan right"||m==="Truck right")g+=ah(32,50,68,50);
+    else if(m==="Tilt up"||m==="Crane up")g+=ah(50,68,50,32);
+    else if(m==="Tilt down"||m==="Crane down")g+=ah(50,32,50,68);
+    else if(m==="Dolly in"||m==="Zoom in")g+=`<rect x="25" y="25" width="50" height="50" ${st} stroke-dasharray="3 2"/>`+ah(6,6,22,22)+ah(94,6,78,22)+ah(6,94,22,78)+ah(94,94,78,78);
+    else if(m==="Dolly out")g+=`<rect x="25" y="25" width="50" height="50" ${st} stroke-dasharray="3 2"/>`+ah(22,22,6,6)+ah(78,22,94,6)+ah(22,78,6,94)+ah(78,78,94,94);
+    else if(m==="Orbit")g+=`<path d="M22 60 A28 12 0 1 0 50 48" ${st}/>`+ah(46,47.4,50,48);
+    else if(m==="Handheld")g+=`<path d="M30 50 q3 -4 6 0 t6 0 t6 0 t6 0 t6 0 t6 0" ${st}/>`;
+    else if(m==="Drone / aerial")g+=ah(30,72,70,30);
+    else if(m==="Rack focus")g+=`<circle cx="35" cy="50" r="8" ${st}/><circle cx="65" cy="50" r="8" ${st} stroke-dasharray="2 2"/>`+ah(45,50,55,50);
+  }
+  return `<svg class="ov" viewBox="0 0 100 100" preserveAspectRatio="none">${g}</svg>`;
+}
+function renderViewer(){
+  const v=$("#viewer");const [W,H]=arOf(S.project);
+  v.style.setProperty("--ar",W/H);v.style.setProperty("--arr",W+" / "+H);
+  const s=selShot();
+  if(!s){
+    v.innerHTML=`<div class="ph"><b>No shots yet</b><span>${S.sample?"Break the brief into shots, or add one in the Scenebuilder below.":"Add a shot in the Scenebuilder below."}</span></div>`;
+    $("#vnav").innerHTML="";return;
+  }
+  const i=S.shots.indexOf(s);const src=frameSrc(s);
+  v.innerHTML=`${src?`<img class="frame" alt="Shot ${i+1} frame" src="${src}">`:`<div class="ph"><b>${esc(s.size)} · ${esc(s.angle)}</b><span>${S.sample?"Sketch a frame with Claude, or drop in an image from Flow or Higgsfield.":"Drop in an image from Flow or Higgsfield."}</span></div>`}
+  ${overlaySVG(s)}
+  <span class="vb tl">${i+1} · ${esc(s.size)} · ${esc(s.angle)}</span>
+  <span class="vb tr">${ICON[s.move]||""} ${esc(s.move)} · ${s.lens}mm · ${s.duration}s</span>
+  ${s.vo?`<div class="vcap">${esc(s.vo)}</div>`:""}`;
+  $("#vnav").innerHTML=`<button data-act="prev" ${i>0?"":"disabled"}>◀</button><span class="ct">Shot ${i+1} of ${S.shots.length}</span><button data-act="next" ${i<S.shots.length-1?"":"disabled"}>▶</button><button class="ghost tog ${S.guides?"on":""}" data-act="guides">Thirds</button><button class="ghost tog ${S.overlay?"on":""}" data-act="overlay">Camera move</button>`;
+}
+function chips(key,list,cur){return`<div class="chips">${list.map(v=>`<button class="chip ${String(v)===String(cur)?"on":""}" data-chip="${key}" data-v="${esc(v)}">${key==="lens"?v+"mm":(key==="move"?(ICON[v]||"")+" ":"")+esc(key==="lens"?"":v)}</button>`).join("")}</div>`}
+function videoPrompt(s){
+  const p=S.project||{};
+  const cam=`${s.size} shot, ${s.angle.toLowerCase()}, ${s.move==="Static"?"locked-off static camera":s.move.toLowerCase()+" camera move"}, ${s.lens}mm lens.`;
+  return [cam,s.action,p.cast?`Characters: ${p.cast}`:"",p.style?`Look: ${p.style}`:"",s.vo?`Audio/VO: "${s.vo}"`:"",`${s.duration}s, ${p.aspect||"16:9"}.`].filter(Boolean).join(" ");
+}
+function renderInspector(force){
+  const el=$("#inspector");const s=selShot();
+  if(!s){el.innerHTML=`<p class="muted" style="padding-top:14px">Select a shot in the Scenebuilder to set its camera and frame.</p>`;return}
+  const i=S.shots.indexOf(s);const busy=!!S.busy[s.id];
+  el.innerHTML=`
+  <div class="insHead"><b>Shot ${i+1}</b><select data-s="status">${Object.keys(STATUS).map(k=>`<option value="${k}" ${s.status===k?"selected":""}>${STATUS[k]}</option>`).join("")}</select></div>
+  <div class="lbl">Action / what we see</div><textarea data-s="action" rows="3" placeholder="What happens in this shot">${esc(s.action)}</textarea>
+  <div class="lbl">VO / super</div><textarea data-s="vo" rows="2" placeholder="Voice-over line or on-screen text">${esc(s.vo)}</textarea>
+  <div class="sec">Camera controls</div>
+  <div class="lbl">Shot size</div>${chips("size",SIZES,s.size)}
+  <div class="lbl">Angle</div>${chips("angle",ANGLES,s.angle)}
+  <div class="lbl">Movement</div>${chips("move",MOVES,s.move)}
+  <div class="lbl">Lens</div>${chips("lens",LENSES,s.lens)}
+  <div class="lbl"><span>Duration</span><span id="durV">${s.duration}s</span></div><input type="range" min="1" max="15" step="0.5" value="${s.duration}" data-s="duration">
+  <div class="sec">Frame</div>
+  <div class="row">${S.sample?`<button class="primary" data-act="sketch" ${busy?"disabled":""}>${busy?'<span class="spin"></span>Sketching…':(s.sketch?"✦ Re-sketch":"✦ Sketch frame")}</button>`:""}<button data-act="upload">Upload image</button></div>
+  ${frameSrc(s)?`<div class="row"><button class="ghost" data-act="clearframe">Remove frame</button></div>`:""}
+  <p class="hint">Sketches follow the camera settings above. You can also drag an image onto the frame.</p>
+  <div class="sec">Video prompt <span>for Flow / Veo</span></div>
+  <pre class="prompt" id="promptBox">${esc(videoPrompt(s))}</pre>
+  <div class="row"><button data-act="copyprompt">Copy prompt</button></div>
+  <div class="sec">Shot</div>
+  <div class="row"><button data-act="dup">Duplicate</button><button class="ghost danger" data-act="delshot">Delete</button></div>`;
+}
+function thumb(s){const src=frameSrc(s);return src?`<img alt="" src="${src}" draggable="false">`:""}
+function renderSB(){
+  const el=$("#sb");if(!S.pid){el.innerHTML="";return}
+  const sel=selShot();const si=sel?S.shots.indexOf(sel):-1;
+  let t=0;
+  const clips=S.shots.map((s,i)=>{const tc=fmtTime(t);t+=+s.duration||0;const w=Math.max(118,Math.min(300,s.duration*30));
+    return`<div class="clip ${s.id===S.sel?"sel":""}" draggable="true" data-id="${esc(s.id)}" style="width:${w}px" title="${esc(s.action)}"><div class="th">${thumb(s)}<span class="num">${i+1}</span><span class="mv">${ICON[s.move]||""}</span>${frameSrc(s)?"":`<span class="act">${esc(s.size)}${s.action?" · "+esc(s.action):""}</span>`}</div><div class="cap"><span>${tc}</span><span><i class="dot ${esc(s.status)}"></i>${s.duration}s</span></div></div>`}).join("");
+  const approved=S.shots.filter(s=>s.status==="approved").length;
+  el.innerHTML=`<div class="sbHead"><b>Scenebuilder</b><span class="muted small">${S.shots.length} shots · ${fmtTime(runtime())} runtime${S.shots.length?` · ${approved} approved`:""}</span><span class="sp"></span>
+  ${S.sample?`<button data-act="extend" ${S.busy.ext?"disabled":""}>${S.busy.ext?'<span class="spin"></span>Extending…':(sel?`✦ Extend from shot ${si+1}`:"✦ Write opening shot")}</button>`:""}<button data-act="add">+ Add shot</button></div>
+  <div class="track" id="track">${clips}<button class="addClip" data-act="add" title="Add shot">+</button></div>`;
+  const c=el.querySelector(".clip.sel");if(c&&!renderSB.noScroll)c.scrollIntoView({block:"nearest",inline:"nearest"});
+}
+
+/* ---------- present (animatic) ---------- */
+let P=null;
+function present(){
+  if(!S.shots.length)return;
+  const start=Math.max(0,S.shots.indexOf(selShot()));
+  P={i:start,el:0,paused:false,last:performance.now(),raf:0};
+  $("#present").classList.remove("hidden");drawPresent();
+  const loop=now=>{if(!P)return;const dt=now-P.last;P.last=now;if(!P.paused){P.el+=dt;const s=S.shots[P.i];if(P.el>=(s.duration||4)*1000){if(P.i<S.shots.length-1){P.i++;P.el=0;drawPresent()}else{P.el=(s.duration||4)*1000;P.paused=true;drawPresent()}}}updBar();P.raf=requestAnimationFrame(loop)};
+  P.raf=requestAnimationFrame(loop);
+}
+function drawPresent(){
+  const s=S.shots[P.i];const [W,H]=arOf(S.project);const src=frameSrc(s);
+  const w=`min(92vw, calc(78vh * ${W/H}))`;
+  $("#present").innerHTML=`<div class="pframe" style="width:${w};aspect-ratio:${W} / ${H}">${src?`<img alt="" src="${src}">`:`<div class="ph"><b>${esc(s.size)} · ${esc(s.angle)}</b><span>${esc(s.action)}</span></div>`}${s.vo?`<div class="pcap">${esc(s.vo)}</div>`:""}</div>
+  <div class="pbar">${S.shots.map((x,j)=>`<div style="flex:${x.duration||4}"><i id="pb${j}" style="width:${j<P.i?100:0}%"></i></div>`).join("")}</div>
+  <div class="pctl"><button data-pa="prev">◀</button><button data-pa="play">${P.paused?"▶ Play":"❚❚ Pause"}</button><button data-pa="next">▶</button><span>Shot ${P.i+1}/${S.shots.length} · ${esc(s.size)} · ${esc(s.move)} · ${s.duration}s</span><button data-pa="close">Close (Esc)</button></div>`;
+}
+function updBar(){if(!P)return;const s=S.shots[P.i];const b=document.getElementById("pb"+P.i);if(b)b.style.width=Math.min(100,P.el/((s.duration||4)*10))+"%"}
+function closePresent(){if(!P)return;cancelAnimationFrame(P.raf);S.sel=S.shots[P.i]&&S.shots[P.i].id||S.sel;P=null;$("#present").classList.add("hidden");$("#present").innerHTML="";renderProject()}
+$("#present").addEventListener("click",e=>{const b=e.target.closest("[data-pa]");if(!b||!P)return;const a=b.dataset.pa;
+  if(a==="close")return closePresent();
+  if(a==="play"){if(P.paused&&P.i===S.shots.length-1&&P.el>=(S.shots[P.i].duration||4)*1000){P.i=0;P.el=0}P.paused=!P.paused;P.last=performance.now()}
+  if(a==="prev"){P.i=Math.max(0,P.i-1);P.el=0}
+  if(a==="next"){P.i=Math.min(S.shots.length-1,P.i+1);P.el=0}
+  drawPresent()});
+
+/* ---------- modal ---------- */
+function openModal(html){const m=$("#modal");m.innerHTML=`<div class="modal">${html}</div>`;m.classList.remove("hidden")}
+function closeModal(){$("#modal").classList.add("hidden");$("#modal").innerHTML=""}
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal"||e.target.closest("[data-close]"))closeModal();if(e.target.id==="npCreate")createProject()});
+$("#modal").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="npName")createProject()});
+
+/* ---------- images ---------- */
+function resizeImage(file){return new Promise((res,rej)=>{
+  const url=URL.createObjectURL(file);const im=new Image();
+  im.onload=()=>{const max=1024;let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+    const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);URL.revokeObjectURL(url);
+    let q=.82,d=c.toDataURL("image/jpeg",q);while(d.length>180000&&q>.35){q-=.08;d=c.toDataURL("image/jpeg",q)}
+    if(d.length>220000)return rej(new Error("too big"));res(d)};
+  im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("read"))};im.src=url})}
+async function setImage(file){
+  const s=selShot();if(!s||!file||!/^image\//.test(file.type)){toast("Pick an image file.");return}
+  try{const d=await resizeImage(file);const cur=S.shots.find(x=>x.id===s.id);if(!cur)return;saveShot(Object.assign({},cur,{image:d,sketch:""}),0);renderProject();toast("Frame added")}
+  catch(e){toast("Couldn't use that image.")}
+}
+$("#fileInput").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";if(f)setImage(f)});
+const viewer=$("#viewer");
+viewer.addEventListener("dragover",e=>{if(S.dragId||!selShot())return;e.preventDefault();viewer.classList.add("drop")});
+viewer.addEventListener("dragleave",()=>viewer.classList.remove("drop"));
+viewer.addEventListener("drop",e=>{viewer.classList.remove("drop");if(S.dragId)return;e.preventDefault();const f=e.dataTransfer.files&&e.dataTransfer.files[0];if(f)setImage(f)});
+
+/* ---------- events ---------- */
+$("#homeBtn").addEventListener("click",()=>{if(S.pid)goHome()});
+document.addEventListener("click",e=>{
+  const open=e.target.closest("[data-open]");if(open){const p=(S.projects||[]).find(x=>x.id===open.dataset.open);openProject(open.dataset.open,p);return}
+  const clip=e.target.closest(".clip");if(clip&&!e.target.closest("[data-act]")){S.sel=clip.dataset.id;renderSB.noScroll=true;renderViewer();renderInspector();renderSB();renderSB.noScroll=false;return}
+  const ch=e.target.closest("[data-chip]");
+  if(ch){const s=selShot();if(!s)return;const k=ch.dataset.chip;const v=k==="lens"?+ch.dataset.v:ch.dataset.v;saveShot(Object.assign({},s,{[k]:v}),300);renderViewer();renderInspector();renderSB();return}
+  const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+  if(a!=="delproj")S.confirmDel=false;
+  switch(a){
+    case"new":newProjectModal();break;
+    case"break":breakBrief();break;
+    case"extend":extendShot();break;
+    case"add":addShot();break;
+    case"dup":dupShot();break;
+    case"delshot":delShot();break;
+    case"sketch":sketchFrame();break;
+    case"upload":$("#fileInput").click();break;
+    case"clearframe":{const s=selShot();if(s){saveShot(Object.assign({},s,{image:"",sketch:""}),0);renderProject()}break}
+    case"prev":{const i=S.shots.indexOf(selShot());if(i>0){S.sel=S.shots[i-1].id;renderViewer();renderInspector();renderSB()}break}
+    case"next":{const i=S.shots.indexOf(selShot());if(i<S.shots.length-1){S.sel=S.shots[i+1].id;renderViewer();renderInspector();renderSB()}break}
+    case"guides":S.guides=!S.guides;renderViewer();break;
+    case"overlay":S.overlay=!S.overlay;renderViewer();break;
+    case"copyprompt":{const s=selShot();if(s)copyText(videoPrompt(s),"Prompt");break}
+    case"prompts":copyText(S.shots.map((s,i)=>`Shot ${i+1} (${s.duration}s)\n${videoPrompt(s)}`).join("\n\n"),"All prompts");break;
+    case"shotlist":{const rows=[["#","Start","Duration","Shot size","Angle","Movement","Lens","Action","VO / super","Status","Video prompt"]];let t=0;
+      S.shots.forEach((s,i)=>{rows.push([i+1,fmtTime(t),s.duration+"s",s.size,s.angle,s.move,s.lens+"mm",s.action,s.vo,STATUS[s.status]||s.status,videoPrompt(s)]);t+=+s.duration||0});
+      copyText(rows.map(r=>r.map(c=>String(c).replace(/[\t\n]+/g," ")).join("\t")).join("\n"),"Shot list");break}
+    case"present":present();break;
+    case"delproj":if(!S.confirmDel){S.confirmDel=true;renderBrief();setTimeout(()=>{if(S.confirmDel){S.confirmDel=false;if(S.pid)renderBrief()}},4000)}else{S.confirmDel=false;const pid=S.pid;S.projPending=true;goHome();Store.delProject(pid).then(ok=>{S.projPending=false;if(ok)toast("Storyboard deleted")})}break;
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.p&&S.project){S.project=Object.assign({},S.project,{[t.dataset.p]:t.value});saveProject();if(t.dataset.p==="aspect")renderViewer();if(t.dataset.p==="name"||t.dataset.p==="client")renderTop();const pb=$("#promptBox");const s=selShot();if(pb&&s)pb.textContent=videoPrompt(s);return}
+  if(t.dataset.s){const s=selShot();if(!s)return;let v=t.value;if(t.dataset.s==="duration"){v=+v;const dv=$("#durV");if(dv)dv.textContent=v+"s"}
+    saveShot(Object.assign({},s,{[t.dataset.s]:v}),t.dataset.s==="status"?0:600);renderViewer();renderSB.noScroll=true;renderSB();renderSB.noScroll=false;const pb=$("#promptBox");if(pb)pb.textContent=videoPrompt(selShot())}
+});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.p==="aspect"){renderViewer();renderSB()}});
+/* drag reorder */
+document.addEventListener("dragstart",e=>{const c=e.target.closest&&e.target.closest(".clip");if(!c)return;S.dragId=c.dataset.id;c.classList.add("dragging");try{e.dataTransfer.setData("text/plain",c.dataset.id);e.dataTransfer.effectAllowed="move"}catch(x){}});
+document.addEventListener("dragend",()=>{S.dragId=null;document.querySelectorAll(".clip").forEach(c=>c.classList.remove("dragging","dropB","dropA"))});
+document.addEventListener("dragover",e=>{if(!S.dragId)return;const c=e.target.closest&&e.target.closest(".clip");if(!c)return;e.preventDefault();const r=c.getBoundingClientRect();const before=e.clientX<r.left+r.width/2;document.querySelectorAll(".clip").forEach(x=>x.classList.remove("dropB","dropA"));c.classList.add(before?"dropB":"dropA")});
+document.addEventListener("drop",e=>{if(!S.dragId)return;const c=e.target.closest&&e.target.closest(".clip");if(!c)return;e.preventDefault();const r=c.getBoundingClientRect();const before=e.clientX<r.left+r.width/2;const id=S.dragId;S.dragId=null;moveShot(id,c.dataset.id,before)});
+document.addEventListener("keydown",e=>{
+  if(P){if(e.key==="Escape")closePresent();else if(e.key===" "){e.preventDefault();P.paused=!P.paused;P.last=performance.now();drawPresent()}else if(e.key==="ArrowRight"){P.i=Math.min(S.shots.length-1,P.i+1);P.el=0;drawPresent()}else if(e.key==="ArrowLeft"){P.i=Math.max(0,P.i-1);P.el=0;drawPresent()}return}
+  if(e.key==="Escape"&&!$("#modal").classList.contains("hidden")){closeModal();return}
+  if(!S.pid||isTyping()||!$("#modal").classList.contains("hidden"))return;
+  const i=S.shots.indexOf(selShot());
+  if(e.key==="ArrowRight"&&i<S.shots.length-1){S.sel=S.shots[i+1].id;renderViewer();renderInspector();renderSB()}
+  if(e.key==="ArrowLeft"&&i>0){S.sel=S.shots[i-1].id;renderViewer();renderInspector();renderSB()}
+});
+window.addEventListener("hashchange",route);
+
+/* ---------- boot ---------- */
+function localNote(){return"Shared saving isn't available in this view, so storyboards are saved in this browser only."}
+function route(){
+  const m=location.hash.match(/^#p-([a-z0-9]+)$/i);
+  if(m){if(S.pid!==m[1]){const p=(S.projects||[]).find(x=>x.id===m[1]);openProject(m[1],p)}}
+  else if(S.pid)goHome();
+}
+async function boot(){
+  renderHome();
+  let db=null,sample=null;
+  if(window.claude&&typeof window.claude.use==="function"){
+    try{const r=await Promise.all([window.claude.use("db").catch(()=>null),window.claude.use("sample").catch(()=>null)]);db=r[0];sample=r[1]}catch(e){}
+  }
+  S.db=db;S.sample=sample;Store=db?DBStore:LocalStore;
+  if(!db)banner(localNote());
+  const tm=setTimeout(()=>{if(S.projects==null){S.projects=[];renderHome();banner("Can't reach saved storyboards yet. Check your connection; this page keeps trying.")}},10000);
+  Store.subProjects(list=>{clearTimeout(tm);S.projects=list;if(!S.pid)renderHome()},e=>{clearTimeout(tm);if(S.projects==null)S.projects=[];if(!S.pid)renderHome();toast("Lost connection to saved storyboards.")});
+  route();
+  if(S.pid)renderProject();
+}
+boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Storyroom · GRT Jewellers</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1b1112;--panel:#241617;--panel2:#2f1c1e;--line:#4d3335;--text:#FFF7DE;--muted:#b9a493;--acc:#B8292F;--acc2:#f2b8bb;--gold:#e3c27a;--ok:#7fd3a0;--rev:#e3c27a;--yog:#f2b8bb;--bad:#ff8a8a;--serif:'Cormorant Garamond',Georgia,serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 Manrope,system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100vh}
+.top{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--line);background:#681015}
+.brand{font-weight:800;letter-spacing:.01em;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand i{width:18px;height:12px;border:2px solid var(--gold);border-radius:2px;display:inline-block;position:relative}
+.brand i:after{content:"";position:absolute;left:3px;top:2px;width:6px;height:4px;background:var(--gold)}
+.crumb{color:#e8cfc4;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--text);font-weight:600}
+.topActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+button:hover:not(:disabled){border-color:#454b55}
+button.primary{background:var(--acc);color:#FFF7DE;border-color:var(--acc);font-weight:700}
+button.primary:hover:not(:disabled){background:#cf3a40}
+button.ghost{background:transparent}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.45;cursor:default}
+input,textarea,select{font:inherit;color:var(--text);background:#0f1114;border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc)}
+textarea{resize:vertical}
+input[type=range]{padding:0;accent-color:var(--acc)}
+.lbl{display:flex;justify-content:space-between;font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:14px 0 6px}
+.sec{font-weight:700;font-size:13px;margin:22px 0 4px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.sec span{font-weight:400;color:var(--muted);font-size:12px}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.row>button{flex:1}
+.hidden{display:none!important}
+.banner{padding:8px 16px;background:#3a2410;color:var(--gold);font-size:13px;border-bottom:1px solid #5a3a1a}
+/* home */
+.home{flex:1;overflow:auto;padding:32px clamp(16px,4vw,48px)}
+.homeHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.homeHead h1{margin:0 0 4px;font:700 38px/1.05 var(--serif);letter-spacing:.005em}
+.homeHead p{margin:0;max-width:560px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+.pcard:hover{border-color:var(--acc);transform:translateY(-2px)}
+.pthumb{aspect-ratio:16/9;background:radial-gradient(circle at 50% 40%,#4a2124,#2a1b1c 70%);display:flex;align-items:center;justify-content:center;position:relative}
+.pthumb .ar{position:absolute;top:8px;left:8px;font:11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;background:#0c0d0f}
+.pthumb .ini{font:700 34px var(--serif);color:#7a4f4f;letter-spacing:.04em}
+.pmeta{padding:10px 12px 12px}
+.pmeta b{display:block;font-size:15px}
+.pmeta span{color:var(--muted);font-size:12px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:40px;text-align:center;color:var(--muted)}
+/* project */
+.project{flex:1;display:grid;grid-template-columns:290px minmax(0,1fr) 330px;grid-template-rows:minmax(0,1fr) 196px auto;min-height:0}
+.meter{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:7px 16px;border-top:1px solid var(--line);background:#120a0b;font:11.5px var(--mono);color:var(--muted)}
+.meter .bar{width:140px;height:6px;border-radius:3px;background:#2f1c1e;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--gold)}
+.meter .bar.hot i{background:var(--bad)}
+.meter b{color:var(--text);font-weight:500}
+.meter .sp{flex:1}
+.meter button{font:11px var(--mono);padding:3px 8px}
+.brief,.inspector{overflow:auto;padding:4px 16px 20px;background:var(--panel);border-right:1px solid var(--line);min-height:0}
+.inspector{border-right:0;border-left:1px solid var(--line)}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0;padding:16px 18px 10px;gap:10px}
+.viewerWrap{flex:1;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center}
+.viewer{position:relative;width:min(100cqw,calc(100cqh * var(--ar)));aspect-ratio:var(--arr);background:#08090a;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.viewer.drop{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.viewer img.frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.viewer svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);text-align:center;padding:20px}
+.ph b{color:var(--text);font-size:18px}
+.vb{position:absolute;font:11px var(--mono);background:rgba(8,9,10,.72);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:3px 7px;color:#ddd;backdrop-filter:blur(4px)}
+.vb.tl{top:8px;left:8px}.vb.tr{top:8px;right:8px;color:var(--gold)}
+.vb.bl{bottom:8px;left:8px;background:var(--gold);color:#1b1112;font-weight:600}
+.vcap{position:absolute;left:8%;right:8%;bottom:6%;text-align:center;font-weight:600;font-size:clamp(11px,1.6cqw,17px);text-shadow:0 1px 3px #000,0 0 12px #000}
+.vnav{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap}
+.vnav .ct{font:12px var(--mono);color:var(--muted);min-width:110px;text-align:center}
+.tog.on{border-color:var(--acc);color:var(--acc2)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:4px 9px;border-radius:999px;font-size:12px;background:#101216;border:1px solid var(--line);color:#cfd2d8}
+.chip.on{background:var(--acc);color:#FFF7DE;border-color:var(--acc);font-weight:700}
+.insHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 2px}
+.insHead b{font:700 22px var(--serif)}
+.insHead select{width:auto}
+pre.prompt{white-space:pre-wrap;font:12px/1.5 var(--mono);background:#0f1114;border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0 0;color:#cfd2d8;max-height:180px;overflow:auto}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+/* scenebuilder */
+.sb{grid-column:1/-1;border-top:1px solid var(--line);background:#160d0e;display:flex;flex-direction:column;min-height:0;padding:10px 16px 8px}
+.sbHead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sbHead b{font-size:14px}
+.sbHead .sp{flex:1}
+.track{flex:1;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:10px 0 4px;align-items:stretch;min-height:0}
+.clip{flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel);overflow:hidden;position:relative;cursor:pointer;display:flex;flex-direction:column;user-select:none}
+.clip.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.clip.dragging{opacity:.4}
+.clip.dropB{box-shadow:-4px 0 0 var(--acc)}
+.clip.dropA{box-shadow:4px 0 0 var(--acc)}
+.clip .th{flex:1;background:#08090a;position:relative;overflow:hidden}
+.clip .th img{width:100%;height:100%;object-fit:cover;display:block}
+.clip .num{position:absolute;top:4px;left:5px;font:600 11px var(--mono);background:rgba(0,0,0,.65);border-radius:3px;padding:0 4px}
+.clip .mv{position:absolute;top:4px;right:5px;font:11px var(--mono);color:var(--gold);background:rgba(0,0,0,.65);border-radius:3px;padding:0 4px}
+.clip .act{position:absolute;inset:auto 5px 4px 5px;font-size:10.5px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip .cap{font:11px var(--mono);padding:4px 7px;display:flex;justify-content:space-between;color:var(--muted);gap:6px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:#666}
+.dot.internal{background:#8fa6d8}.dot.yogesh{background:var(--yog)}.dot.approved{background:var(--ok)}
+.qc{display:inline-block;font:600 10px var(--mono);letter-spacing:.06em;color:#1b1112;background:var(--gold);border-radius:3px;padding:1px 5px}
+.clip .qc{position:absolute;bottom:4px;right:5px}
+.warn{color:var(--gold)}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.pcell{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#1b1112}
+.pcell .pimg{aspect-ratio:1;background:#1b1112 center/cover no-repeat}
+.pcell .pno{position:absolute;top:4px;left:4px;font:600 10px var(--mono);background:var(--gold);color:#1b1112;border-radius:3px;padding:0 4px}
+.pcell .pdel{position:absolute;top:2px;right:2px;padding:0 6px;font-size:12px;background:rgba(0,0,0,.6);border:0}
+.pcell input{border:0;border-top:1px solid var(--line);border-radius:0;padding:5px 6px;font-size:11px;background:#160d0e}
+.tprod{display:inline-flex;align-items:center;gap:6px;padding:3px 8px 3px 3px}
+.tprod i{width:20px;height:20px;border-radius:4px;background:#1b1112 center/cover;display:inline-block}
+.flag{font-size:12px;color:var(--gold);background:#3a2410;border:1px solid #5a3a1a;border-radius:6px;padding:6px 8px;margin-top:6px}
+.clip .cf{position:absolute;bottom:4px;left:5px;font:600 10px var(--mono);color:#1b1112;background:var(--gold);border-radius:3px;padding:0 4px}
+a.btnlink{display:inline-block;text-align:center;font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;text-decoration:none;white-space:nowrap}
+a.btnlink.primary{background:var(--acc);border-color:var(--acc);color:#FFF7DE;font-weight:700;flex:1}
+a.btnlink:hover{border-color:#6a4a4c}
+.infl{display:flex;gap:10px;align-items:flex-start;margin-top:8px}
+.infl .pic{width:72px;height:90px;flex:none;border-radius:8px;border:1px solid var(--line);background:#1b1112 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center}
+.infl .col{flex:1;display:flex;flex-direction:column;gap:6px}
+a.lnk{color:var(--gold)}
+.ftabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.pmeta .tag{display:inline-block;font:11px var(--mono);color:var(--gold);margin-bottom:3px}
+.addClip{flex:none;width:70px;font-size:22px;color:var(--muted);border-style:dashed;background:transparent}
+/* present */
+.present{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.pframe{position:relative;background:#0a0a0a;overflow:hidden;border-radius:4px}
+.pframe img{width:100%;height:100%;object-fit:cover;display:block}
+.pcap{position:absolute;left:6%;right:6%;bottom:6%;text-align:center;font-weight:700;font-size:clamp(14px,2.2vw,26px);text-shadow:0 2px 4px #000,0 0 18px #000}
+.pbar{display:flex;gap:3px;width:min(92vw,1100px)}
+.pbar div{height:4px;background:#333;border-radius:2px;overflow:hidden}
+.pbar div i{display:block;height:100%;background:var(--gold);width:0}
+.pctl{display:flex;gap:8px;align-items:center;color:var(--muted);font:12px var(--mono)}
+/* modal & toast */
+.modalBack{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:min(560px,100%);max-height:90vh;overflow:auto}
+.modal h2{margin:0 0 6px;font-size:19px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#22252b;border:1px solid var(--line);border-radius:10px;padding:10px 16px;opacity:0;pointer-events:none;transition:.2s;z-index:70;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:1050px){.project{grid-template-columns:240px minmax(0,1fr) 290px}}
+@media (max-width:820px){.project{display:flex;flex-direction:column;overflow:auto}.brief,.inspector{border:0;overflow:visible}.stage{min-height:60vh}.sb{min-height:200px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand" id="homeBtn"><i></i>Storyroom <span style="font:600 13px var(--mono);color:var(--gold);letter-spacing:.08em">· GRT</span></div>
+    <div class="crumb" id="crumb"></div>
+    <div class="topActions" id="topActions"></div>
+  </header>
+  <div id="banner" class="banner hidden"></div>
+  <main id="home" class="home"></main>
+  <main id="project" class="project hidden">
+    <aside class="brief" id="briefPane"></aside>
+    <section class="stage">
+      <div class="viewerWrap"><div class="viewer" id="viewer"></div></div>
+      <div class="vnav" id="vnav"></div>
+    </section>
+    <aside class="inspector" id="inspector"></aside>
+    <footer class="sb" id="sb"></footer>
+    <div class="meter" id="meter"></div>
+  </main>
+</div>
+<div id="present" class="present hidden"></div>
+<div id="modal" class="modalBack hidden"></div>
+<div id="toast" class="toast"></div>
+<input type="file" id="fileInput" accept="image/*" hidden>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-5);
+const SIZES=["Macro","Extreme wide","Wide","Full","Medium","Medium close-up","Close-up","Extreme close-up","Insert"];
+const ANGLES=["Eye level","Low angle","High angle","Overhead","Dutch tilt","Over the shoulder","POV"];
+const MOVES=["Static","Pan left","Pan right","Tilt up","Tilt down","Dolly in","Dolly out","Truck left","Truck right","Crane up","Crane down","Orbit","Handheld","Drone / aerial","Zoom in","Rack focus","Turntable 360","Light sweep"];
+const LENSES=[16,24,35,50,85,100,135];
+const ICON={"Static":"■","Pan left":"←","Pan right":"→","Tilt up":"↑","Tilt down":"↓","Dolly in":"⇥","Dolly out":"⇤","Truck left":"⇠","Truck right":"⇢","Crane up":"⇡","Crane down":"⇣","Orbit":"↻","Handheld":"≈","Drone / aerial":"✈","Zoom in":"⊕","Rack focus":"◎","Turntable 360":"⟳","Light sweep":"✧"};
+const ASPECTS={"16:9":[1600,900],"9:16":[900,1600],"1:1":[1200,1200],"4:5":[1080,1350]};
+const STATUS={draft:"Draft",internal:"Internal review",yogesh:"⚑ With Yogesh",approved:"Approved by Yogesh"};
+const PRODUCTS=["Gold","Diamond","Silver","Silver Articles"];
+const KINDS={bau:"BAU row",topical:"Festival topical"};
+const TIERS={1:"Tier 1 · 3 statics + 1 video",2:"Tier 2 · 1 static + 1 video",3:"Tier 3 · 1 story"};
+const PRODUCT_CAST={"Gold":"GRT 22K gold jewellery: necklace, bangles or jhumkas as the hero. Model in a silk saree, South Indian, warm and graceful.","Diamond":"GRT diamond jewellery: solitaire ring, pendant or studs as the hero. Contemporary South Indian woman, modern occasion styling.","Silver":"GRT silver jewellery: anklets, chains, toe rings or oxidised pieces as the hero. Young, everyday styling.","Silver Articles":"GRT silver articles: pooja items, kuthuvilakku, plates, gift sets as the hero. Home and festive gifting setting."};
+const DEFAULT_STYLE="Premium festive South Indian jewellery film. Warm key light with crisp specular sparkle on metal and stones, soft falloff, rich shadows. Cream, maroon and gold palette. Uncluttered, product always readable.";
+const QC_RE=/(\d|₹|%|\brs\.?\b|carat|\bct\b|\bgms?\b|gram|offer|\boff\b|\bfree\b|making charge|discount|guarantee|warranty|\bbis\b|hallmark|purity|22k|18k|24k|cashback|\bemi\b|t&c|\*)/i;
+function needsQC(s){return QC_RE.test((s.vo||"")+" "+(s.dlg||""))}
+function grtTemplate(product){const P=product||"Gold";const hero={"Gold":"gold necklace","Diamond":"diamond solitaire","Silver":"silver anklet","Silver Articles":"silver kuthuvilakku"}[P]||"jewellery";return[
+ {action:`Black-to-light open: a slow light sweep travels across the ${hero}, sparkle catches on the edges.`,vo:"",size:"Macro",angle:"Eye level",move:"Light sweep",lens:100,duration:3},
+ {action:`The ${hero} on a cream plinth against maroon, rotating to show craftsmanship from every side.`,vo:"",size:"Close-up",angle:"Low angle",move:"Turntable 360",lens:85,duration:5},
+ {action:P==="Silver Articles"?`Hands place the ${hero} on the pooja shelf and light it; warm glow blooms across the silver.`:`Model's hand / neckline reveal: she adjusts the ${hero}, a small private smile.`,vo:"",size:"Medium close-up",angle:"Eye level",move:"Dolly in",lens:50,duration:6},
+ {action:`Extreme detail of texture and finish: filigree, setting or engraving in crisp focus.`,vo:"",size:"Extreme close-up",angle:"High angle",move:"Rack focus",lens:100,duration:4},
+ {action:`Occasion moment: family or festive setting, the ${hero} catches the light as she turns.`,vo:"",size:"Medium",angle:"Eye level",move:"Orbit",lens:35,duration:6},
+ {action:`End frame: ${hero} hero on cream with GRT logo and super in the copy space.`,vo:"GRT Jewellers. (super to be written)",size:"Close-up",angle:"Eye level",move:"Static",lens:85,duration:4}
+].map(normShot)}
+const S={products:[],db:null,sample:null,projects:null,pid:null,project:null,shots:[],shotsLoaded:false,sel:null,unsub:[],pending:{},projPending:false,guides:true,overlay:true,busy:{},dragId:null};
+let Store=null;
+
+/* ---------- helpers ---------- */
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),3200)}
+function banner(m){const b=$("#banner");if(!m){b.classList.add("hidden");return}b.textContent=m;b.classList.remove("hidden")}
+function strip(o){const c=Object.assign({},o);delete c.id;return c}
+function fmtTime(sec){sec=Math.round(sec||0);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function ago(ts){if(!ts)return"";const d=(Date.now()-ts)/1000;if(d<60)return"just now";if(d<3600)return Math.floor(d/60)+"m ago";if(d<86400)return Math.floor(d/3600)+"h ago";return Math.floor(d/86400)+"d ago"}
+function arOf(p){return ASPECTS[(p&&p.aspect)||"16:9"]||ASPECTS["16:9"]}
+function runtime(){return S.shots.reduce((a,s)=>a+(+s.duration||0),0)}
+function pick(v,list,def){return list.includes(v)?v:def}
+function frameSrc(s){
+  if(s.image&&/^data:image\/(jpeg|png|webp);/.test(s.image))return s.image;
+  if(s.sketch)return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(s.sketch);
+  return "";
+}
+function isTyping(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")}
+async function copyText(text,label){
+  try{await navigator.clipboard.writeText(text);toast((label||"Copied")+" to clipboard")}
+  catch(e){openModal(`<h2>${esc(label||"Copy")}</h2><p class="muted small">Your browser blocked the clipboard. Select all and copy.</p><textarea rows="12" id="copyArea">${esc(text)}</textarea><div class="row"><button data-close>Close</button></div>`);const a=$("#copyArea");a.focus();a.select()}
+}
+function writeErr(e){
+  const c=e&&e.code;
+  if(c==="invalid_argument")toast("Couldn't save. You may have view-only access, or the frame is too large.");
+  else if(c==="quota_exceeded")toast("Storage is full. Delete old projects or frames to keep saving.");
+  else if(c==="resource_exhausted")toast("Saving too fast. Give it a second.");
+  else if(c==="revoked")toast("Access changed. Reload to continue.");
+  else toast("Couldn't save just now. Try again.");
+  return false;
+}
+
+/* ---------- stores ---------- */
+const chains={};
+function queued(path,fn){const p=(chains[path]||Promise.resolve()).then(fn).then(()=>true,writeErr);chains[path]=p;return p}
+const DBStore={
+  subProjects(cb,err){return S.db.collection("projects").orderBy("updatedAt","desc").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data())),s.metadata),err)},
+  subProject(pid,cb,err){return S.db.doc("projects/"+pid).onSnapshot(s=>cb(s.exists?Object.assign({id:s.id},s.data()):null,s.metadata),err)},
+  subShots(pid,cb,err){return S.db.collection("projects/"+pid+"/shots").orderBy("order").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data())),s.metadata),err)},
+  putProject(pid,o){return queued("projects/"+pid,()=>S.db.doc("projects/"+pid).set(strip(o)))},
+  putShot(pid,sid,o){const p="projects/"+pid+"/shots/"+sid;return queued(p,()=>S.db.doc(p).set(strip(o)))},
+  delShot(pid,sid){const p="projects/"+pid+"/shots/"+sid;return queued(p,()=>S.db.doc(p).delete())},
+  subProducts(pid,cb,err){return S.db.collection("projects/"+pid+"/products").orderBy("no").onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data()))),err)},
+  putProduct(pid,id,o){const p="projects/"+pid+"/products/"+id;return queued(p,()=>S.db.doc(p).set(strip(o)))},
+  delProduct(pid,id){const p="projects/"+pid+"/products/"+id;return queued(p,()=>S.db.doc(p).delete())},
+  getRef(pid,k){return S.db.doc("projects/"+pid+"/refs/"+k).get().then(d=>d.exists?d.data():null,()=>null)},
+  putRef(pid,k,o){const p="projects/"+pid+"/refs/"+k;return queued(p,()=>S.db.doc(p).set(o))},
+  async delProject(pid){try{const snap=await S.db.collection("projects/"+pid+"/shots").get();for(const d of snap.docs)await S.db.doc("projects/"+pid+"/shots/"+d.id).delete();await S.db.doc("projects/"+pid).delete();return true}catch(e){return writeErr(e)}}
+};
+const LocalStore=(function(){
+  let d=null;try{d=JSON.parse(localStorage.getItem("storyroom-grt-v1"))}catch(e){}
+  d=d&&d.projects?d:{projects:{}};
+  const subs=new Set();
+  const persist=()=>{try{localStorage.setItem("storyroom-grt-v1",JSON.stringify(d))}catch(e){toast("This browser couldn't save. Storage may be full.")}subs.forEach(f=>f())};
+  const sub=f=>{subs.add(f);setTimeout(f,0);return()=>subs.delete(f)};
+  const meta={fromCache:false};
+  const noShots=p=>{const c=Object.assign({},p);delete c.shots;delete c.refs;delete c.products;return c};
+  return{
+    subProjects(cb){return sub(()=>cb(Object.keys(d.projects).map(id=>Object.assign({id},noShots(d.projects[id]))).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)),meta))},
+    subProject(pid,cb){return sub(()=>{const p=d.projects[pid];cb(p?Object.assign({id:pid},noShots(p)):null,meta)})},
+    subShots(pid,cb){return sub(()=>{const p=d.projects[pid];const sh=p&&p.shots?p.shots:{};cb(Object.keys(sh).map(id=>Object.assign({id},sh[id])).sort((a,b)=>a.order-b.order),meta)})},
+    async putProject(pid,o){const prev=d.projects[pid]||{};d.projects[pid]=Object.assign(strip(o),{shots:prev.shots||{},refs:prev.refs||{},products:prev.products||{}});persist();return true},
+    async putShot(pid,sid,o){const p=d.projects[pid];if(!p)return false;p.shots=p.shots||{};p.shots[sid]=strip(o);persist();return true},
+    async delShot(pid,sid){const p=d.projects[pid];if(p&&p.shots)delete p.shots[sid];persist();return true},
+    subProducts(pid,cb){return sub(()=>{const p=d.projects[pid];const pr=p&&p.products?p.products:{};cb(Object.keys(pr).map(id=>Object.assign({id},pr[id])).sort((a,b)=>a.no-b.no))})},
+    async putProduct(pid,id,o){const p=d.projects[pid];if(!p)return false;p.products=p.products||{};p.products[id]=strip(o);persist();return true},
+    async delProduct(pid,id){const p=d.projects[pid];if(p&&p.products)delete p.products[id];persist();return true},
+    async getRef(pid,k){const p=d.projects[pid];return p&&p.refs&&p.refs[k]||null},
+    async putRef(pid,k,o){const p=d.projects[pid];if(!p)return false;p.refs=p.refs||{};p.refs[k]=o;persist();return true},
+    async delProject(pid){delete d.projects[pid];persist();return true}
+  };
+})();
+
+/* ---------- saving ---------- */
+const timers={};
+function saveShot(shot,delay){
+  S.pending[shot.id]=shot;
+  const i=S.shots.findIndex(x=>x.id===shot.id);if(i>=0)S.shots[i]=shot;
+  clearTimeout(timers[shot.id]);
+  const pid=S.pid;
+  timers[shot.id]=setTimeout(async()=>{
+    const s=S.pending[shot.id];if(!s)return;
+    await Store.putShot(pid,s.id,s);
+    if(S.pending[shot.id]===s)delete S.pending[shot.id];
+    touchProject();
+  },delay==null?600:delay);
+}
+function saveProject(delay){
+  if(!S.project)return;
+  S.projPending=true;clearTimeout(timers._p);
+  const pid=S.pid;
+  timers._p=setTimeout(async()=>{
+    const p=Object.assign({},S.project,{updatedAt:Date.now(),shotCount:S.shots.length,runtime:runtime()});
+    await Store.putProject(pid,p);S.projPending=false;
+  },delay==null?700:delay);
+}
+function touchProject(){
+  if(!S.project)return;
+  if(S.project.shotCount===S.shots.length&&S.project.runtime===runtime()&&Date.now()-(S.project.updatedAt||0)<60000)return;
+  saveProject(1500);
+}
+
+/* ---------- AI (Claude) ---------- */
+function aiErr(e){
+  const c=e&&e.code;
+  if(c==="not_granted"){S.sample=null;toast("Claude isn't available in this view.");renderProject()}
+  else if(c==="rate_limited")toast("Claude is busy. Try again in a minute.");
+  else toast("Claude couldn't finish that. Try again.");
+}
+let LAST_OUT="";
+async function askJSON(prompt){LAST_OUT="";
+  if(typeof S.sample.json==="function"){
+    try{const v=await S.sample.json(prompt,{modelTier:"default"});LAST_OUT=JSON.stringify(v);return v}catch(e){if(e&&e.code)throw e}
+  }
+  const r=await S.sample(prompt,{modelTier:"default"});LAST_OUT=String(r.text||"");
+  const m=String(r.text||"").match(/\{[\s\S]*\}/);if(!m)throw new Error("no json");
+  return JSON.parse(m[0]);
+}
+function normShot(o){
+  o=o||{};
+  let lens=+o.lens;if(!LENSES.includes(lens))lens=LENSES.reduce((a,b)=>Math.abs(b-lens)<Math.abs(a-lens)?b:a,35);
+  let dur=+o.duration;if(!(dur>0))dur=4;dur=Math.min(30,Math.max(1,Math.round(dur*2)/2));
+  return{action:String(o.action||"").slice(0,800),vo:String(o.vo||"").slice(0,300),dlg:String(o.dlg||"").slice(0,1200),size:pick(o.size,SIZES,"Medium"),angle:pick(o.angle,ANGLES,"Eye level"),move:pick(o.move,MOVES,"Static"),lens,duration:dur};
+}
+const SPEC=`"size": one of ${JSON.stringify(SIZES)}, "angle": one of ${JSON.stringify(ANGLES)}, "move": one of ${JSON.stringify(MOVES)}, "lens": one of ${JSON.stringify(LENSES)}, "duration": seconds between 1 and 30`;
+function talent(){const p=S.project||{};if(!p.inflName&&!p.inflLook)return"";return `${p.inflName||"The influencer"}${p.inflLook?" ("+p.inflLook+")":""}`}
+const GENS={gemini:{label:"Gemini app · free tier (recommended)",short:"Gemini"},pollinations:{label:"Pollinations (free, no login, no face match)",short:"Pollinations"},chatgpt:{label:"ChatGPT (free tier, uses her photo)",short:"ChatGPT"},canva:{label:"Canva (paid after a few)",short:"Canva"}};
+const GEN_URL={gemini:"https://gemini.google.com/app",chatgpt:"https://chatgpt.com/",canva:"https://www.canva.com/ai"};
+function genOf(){return (S.project&&S.project.gen)||"gemini"}
+function seedOf(){const p=S.project||{};if(p.seed)return p.seed;let h=0;for(const c of String(S.pid||"x"))h=(h*31+c.charCodeAt(0))>>>0;return h%999999}
+function freeUrl(s){const [W,H]=arOf(S.project);const k=Math.min(1,1024/Math.max(W,H));const w=Math.round(W*k/8)*8,h=Math.round(H*k/8)*8;
+  let pr=framePrompt(s).replace(/Match the face[^.]*\./,"");if(pr.length>1400)pr=pr.slice(0,1400);
+  return "https://image.pollinations.ai/prompt/"+encodeURIComponent(pr)+"?width="+w+"&height="+h+"&seed="+seedOf()+"&nologo=true"}
+function shotNo(s){return S.shots.indexOf(s)+1}
+function geminiPrompt(s){const n=S.shots.length,i=shotNo(s);const p=S.project||{};
+  const fp=framePrompt(s).replace(/Talent: [^]*?exactly\./,"").replace(/^Photoreal cinematic storyboard frame, [^.]*\.\s*/,"");
+  return `Frame ${i} of ${n}. Generate one ${p.aspect||"16:9"} photoreal image. ${talent()||p.inflName?"If she appears, she is the same woman as in my reference photo and earlier frames: keep her face, skin tone and hair identical. ":""}${fp}`}
+function geminiSession(){const p=S.project||{};const n=S.shots.length;
+  const list=S.shots.map((s,i)=>`${i+1}. ${s.size}, ${s.angle.toLowerCase()}, ${s.lens}mm, ${s.move.toLowerCase()} · ${s.action||"(see frame prompt)"}${shotProds(s).length?" · "+shotProds(s).map(x=>"Prd "+x.no).join(", "):""}${s.outfit&&s.outfit.trim()?" · outfit change: "+s.outfit:""}`).join("\n");
+  let k=0;const refs=[(talent()||p.inflName)?`${++k}) talent, ${p.inflName||"the influencer"}`:""].concat(S.products.map(pr=>`${++k}) ${prodLabel(pr)}`)).filter(Boolean);
+  return `You are my storyboard artist for a GRT Jewellers ${p.kind==="topical"?(p.festival||"festive")+" ":""}film (${p.product||"Gold"} jewellery), ${p.aspect||"16:9"}, ${n} frames.
+${talent()||p.inflName?`The attached photo is our talent, ${p.inflName||"the influencer"}${p.inflLook?" ("+p.inflLook+")":""}. Keep her face, skin tone and hair identical in every frame she appears in.`:"Keep the same woman, wardrobe and styling consistent across every frame."}
+${refs.length?`I'm attaching ${refs.length} reference photo${refs.length>1?"s":""} in this order: ${refs.join("; ")}. Reproduce every product exactly as photographed whenever it appears: same design, stones, metal colour and proportions.\n`:""}${continuityLock()?`CONTINUITY LOCK, identical in every frame unless I say otherwise: ${continuityLock()}.\n`:""}This is one continuous film: each frame must cut naturally from the previous one, with the same jewellery placement, hair, set and light direction, and matching action and screen direction.
+Look for every frame: ${p.style||DEFAULT_STYLE}${p.bg?` Background: ${p.bg}.`:""}${p.props?` Props: ${p.props}.`:""}${p.light?` Lighting: ${p.light}.`:""}
+The jewellery is always the hero: sharp, readable and catching the light. Never put text, logos or watermarks in the images. Leave clean copy space on end frames.
+
+Shot list:
+${list}
+
+Generate frame 1 now. I'll ask for each next frame by number.`}
+const DRESSES=["Kanjivaram silk saree","Kanchi silk saree, minimal Nalli-style","Gold beige tissue saree","Half-saree / pavadai davani","Lehenga with sweetheart-neckline blouse","Sleeveless kurta set with shawl","Pastel evening gown","Indo-western drape","Custom (describe below)"];
+const COLOURS=["Pastel pink","Gold beige","Icy blue","Emerald green","Crimson red","Ivory","Lavender","Maroon","Mustard yellow","Navy"];
+const TODS=["Golden hour","Bright day, soft window light","Evening, warm lamps","Night, festive lights","Studio, controlled light"];
+function lookText(){const p=S.project||{};let d=(p.dress||"").startsWith("Custom")?"":(p.dress||"");if(d&&p.dressColor&&!/^(Kanjivaram|Kanchi)/.test(d))d=d.charAt(0).toLowerCase()+d.slice(1);return [p.dressColor,d].filter(Boolean).join(" ")+(p.dressNote?((d||p.dressColor)?", ":"")+p.dressNote:"")}
+function outfitOf(s){return (s&&s.outfit&&s.outfit.trim())||lookText()}
+function prodById(id){return S.products.find(x=>x.id===id)}
+function prodLabel(pr){return `Prd ${pr.no}${pr.name?" ("+pr.name+")":""}`}
+function shotProds(s){return (s.prods||[]).map(prodById).filter(Boolean)}
+function continuityLock(s){const p=S.project||{};const ov=s&&s.outfit&&s.outfit.trim();return [!ov&&lookText()&&`outfit: ${lookText()}`,p.hair&&`hair & makeup: ${p.hair}`,p.setLoc&&`set: ${p.setLoc}`,p.tod&&`time & light: ${p.tod}`].filter(Boolean).join("; ")}
+function prevShot(s){const i=S.shots.indexOf(s);return i>0?S.shots[i-1]:null}
+function continuityLine(s){const pv=prevShot(s);if(!pv)return "";const n=S.shots.indexOf(s);
+  const chg=s.outfit&&s.outfit.trim()&&outfitOf(s)!==outfitOf(pv);
+  return `Continuity with frame ${n} (${pv.size.toLowerCase()}${pv.action?": "+(pv.action.length>90?pv.action.slice(0,90).replace(/\s+\S*$/,"")+"…":pv.action):""}): ${chg?`outfit deliberately changes to ${outfitOf(s)}; `:"same outfit, "}same jewellery placement, hair, set and light direction; continue the action and screen direction from that frame.`}
+function continuityFlags(s){const f=[];const pv=prevShot(s);
+  if(pv&&pv.size===s.size&&pv.angle===s.angle)f.push(`Jump cut: same size and angle as shot ${S.shots.indexOf(pv)+1}. Change the size or angle by at least one step.`);
+  if(pv&&outfitOf(s)!==outfitOf(pv)&&!(s.cont||"").trim())f.push(`Outfit changes from shot ${S.shots.indexOf(pv)+1}. If it's intentional, say why in the continuity note.`);
+  if(S.products.length&&!(s.prods||[]).length&&["Macro","Insert","Extreme close-up","Close-up"].includes(s.size))f.push("Product close-up with no product tagged. Pick which product is in frame.");
+  if(pv&&(s.prods||[]).length&&(pv.prods||[]).length&&s.size!=="Macro"&&pv.size!=="Macro"&&!(s.prods||[]).some(x=>(pv.prods||[]).includes(x))&&!(s.cont||"").trim())f.push(`Different jewellery from shot ${S.shots.indexOf(pv)+1} on the same talent. Note the change or keep the same piece.`);
+  return f}
+function genLink(s){const g=genOf();return g==="pollinations"?freeUrl(s):GEN_URL[g]}
+function framePrompt(s){
+  const p=S.project||{};const t=talent();
+  const tr=[p.bg&&`background ${p.bg}`,p.props&&`props: ${p.props}`,p.light&&`lighting: ${p.light}`,p.place&&`product placement: ${p.place}`].filter(Boolean).join("; ");
+  const pr=shotProds(s);const lock=continuityLock(s);
+  return [`Photoreal cinematic storyboard frame, ${p.aspect||"16:9"}.`,`${s.size} shot, ${s.angle.toLowerCase()}, ${s.lens}mm lens${s.move!=="Static"?`, start of a ${s.move.toLowerCase()} move`:""}.`,s.action,t?`Talent: ${t}. Match the face, skin tone and hair of the person in the reference photo exactly.`:"",pr.length?`Jewellery in frame: ${pr.map(prodLabel).join(", ")}. Reproduce ${pr.length>1?"each piece":"the piece"} exactly as in my product reference photo${pr.length>1?"s":""}: same design, stones, metal colour and proportions.`:`Hero product: GRT ${p.product||"Gold"} jewellery, sharp, readable and catching the light.`,outfitOf(s)?`Wardrobe: ${outfitOf(s)}.`:"",lock?`Continuity lock (identical in every frame): ${lock}.`:"",continuityLine(s),tr?`Treatment: ${tr}.`:"",p.style?`Look: ${p.style}`:"",/end frame/i.test(s.action)?"Leave clean copy space for the logo and super.":"","No text, logos or watermarks in the image."].filter(Boolean).join(" ");
+}
+function ctx(){const p=S.project||{};return `${S.products.length?`Products to feature (use these numbers): ${S.products.map(prodLabel).join("; ")}.\n`:""}${continuityLock()?`Continuity lock for every shot: ${continuityLock()}.\n`:""}Client: GRT Jewellers (South India). ${p.kind==="topical"?`Festival topical: ${p.festival||"(festival)"}${p.festDate?" on "+p.festDate:""}, ${TIERS[p.tier]||""}.`:`BAU ${p.row||""}.`} Product line: ${p.product||"Gold"}.\nTreatment: background ${p.bg||"(open)"}; props ${p.props||"(open)"}; lights & shadows ${p.light||"(open)"}; product placement ${p.place||"(open)"}.\nFormat: ${p.aspect||"16:9"} video.\nBrief / script:\n${p.brief||"(none)"}\nLook & feel: ${p.style||"(none)"}\nCharacters & ingredients: ${p.cast||"(none)"}${talent()?`\nTalent (influencer, appears in the film): ${talent()}`:""}`}
+
+async function breakBrief(){
+  if(!S.sample||!S.project)return;
+  if(!(S.project.brief||"").trim()){toast("Add a brief or script first.");return}
+  if(!canSpend("brk"))return;
+  S.busy.brk=true;renderBrief();
+  try{
+    const Q=`You are a commercial director breaking an ad brief into a storyboard shot list.\n${ctx()}\n\nReturn JSON only, no prose: {"shots":[{"action": what we see in 1-2 vivid sentences, "vo": VO line or on-screen super for this shot or "", ${SPEC}}]}\nGRT rules: total runtime 20-40 seconds (aim ~30). The jewellery must be the hero and clearly readable in most shots: use Macro, Turntable 360, Light sweep and on-model reveals. Supers are in English only. Never invent prices, weights, offers, purity or product numbers: if a super needs one, write [to QC]. Final shot is a GRT end frame with logo and super in copy space. 5-8 shots. Make the idea specific to this product and occasion; avoid generic 'sparkle and smile' films any jeweller could run.`;
+    const res=await askJSON(Q);meter("brk",Q,LAST_OUT);
+    const list=(res&&res.shots)||[];
+    if(!list.length)throw new Error("empty");
+    let base=S.shots.length?S.shots[S.shots.length-1].order:0;
+    const made=[];
+    for(const o of list.slice(0,30)){base+=1;const s=Object.assign(blankShot(base),normShot(o));made.push(s);S.shots.push(s);await Store.putShot(S.pid,s.id,s)}
+    S.sel=made[0].id;toast(`Added ${made.length} shots`);touchProject();renderProject();
+  }catch(e){aiErr(e)}
+  S.busy.brk=false;renderBrief();
+}
+async function extendShot(){
+  if(!S.sample)return;
+  const cur=selShot();const i=S.shots.indexOf(cur);const nxt=S.shots[i+1];
+  if(!canSpend("ext"))return;
+  S.busy.ext=true;renderSB();
+  try{
+    const Q=`You are a commercial director continuing a storyboard.\n${ctx()}\n\n${cur?`Current shot:\n${JSON.stringify(normShot(cur))}`:"There are no shots yet: write the opening shot."}\n${nxt?`The shot after it (the new shot must bridge to this):\n${JSON.stringify(normShot(nxt))}`:""}\n\nWrite the NEXT shot that continues directly from the current one: keep continuity of action, screen direction, characters and light. Choose a camera setup that cuts well from the current shot.\nReturn JSON only: {"shot":{"action":..., "vo":..., ${SPEC}}}`;
+    const res=await askJSON(Q);meter("ext",Q,LAST_OUT,0,cur?"after shot "+(i+1):"opening");
+    const o=normShot(res&&res.shot);
+    const order=cur?(nxt?(cur.order+nxt.order)/2:cur.order+1):1;
+    const s=Object.assign(blankShot(order),o);
+    S.shots.splice(cur?i+1:S.shots.length,0,s);S.sel=s.id;
+    await Store.putShot(S.pid,s.id,s);touchProject();renderProject();
+  }catch(e){aiErr(e)}
+  S.busy.ext=false;renderSB();
+}
+function cleanSVG(txt){
+  const a=txt.indexOf("<svg"),b=txt.lastIndexOf("</svg>");if(a<0||b<0)return null;
+  const raw=txt.slice(a,b+6);
+  const doc=new DOMParser().parseFromString(raw,"image/svg+xml");
+  if(doc.querySelector("parsererror"))return null;
+  doc.querySelectorAll("script,foreignObject,image,iframe,use,a,style,animate,set").forEach(n=>n.remove());
+  doc.querySelectorAll("*").forEach(n=>{[...n.attributes].forEach(at=>{if(/^on/i.test(at.name)||/href$/i.test(at.name))n.removeAttribute(at.name)})});
+  const svg=doc.documentElement;if(svg.nodeName.toLowerCase()!=="svg")return null;
+  svg.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  const out=new XMLSerializer().serializeToString(svg);
+  return out.length<150000?out:null;
+}
+async function sketchFrame(){
+  const s=selShot();if(!s||!S.sample)return;
+  const [W,H]=arOf(S.project);const id=s.id;
+  if(!canSpend("sketch"))return;
+  S.busy[id]=true;renderInspector(true);
+  try{
+    const Q=`You are a storyboard artist. Draw ONE storyboard frame as a single SVG.\nRules:\n- Output only SVG markup starting with <svg and ending with </svg>. No prose, no code fences.\n- Use viewBox="0 0 ${W} ${H}" width="${W}" height="${H}".\n- Style: rough pencil storyboard sketch. Start with a full-size paper rect (#f3f0e8). Draw with dark grey strokes (#2b2b2b, #5a5a5a), stroke-linecap round, stroke widths 3-8, and a few flat grey fills (#d8d3c6, #bfb8a8) for shadow masses. No colour, no gradients, no filters, no text, no images, no scripts.\n- The composition MUST honour the camera: shot size "${s.size}", angle "${s.angle}", lens ${s.lens}mm${s.move!=="Static"?`, start frame of a ${s.move.toLowerCase()} move`:""}. Use rule-of-thirds placement and perspective lines that match the angle. Simple readable figures (head, shoulders, hands, gesture), key props and set lines.\n- Keep it under about 90 elements.\n\nSubject: GRT jewellery film (${(S.project&&S.project.product)||"Gold"}). Keep the jewellery clearly drawn and readable; leave clean copy space if this is an end frame.\nScene: ${s.action||"(no description: draw an establishing frame for the brief)"}\nMood (shape and light only): ${(S.project&&S.project.style)||"cinematic"}\nCharacters: ${talent()||(S.project&&S.project.cast)||"as described in the scene"}`;
+    const r=await S.sample(Q,{modelTier:"default"});meter("sketch",Q,String(r.text||""),0,"shot "+shotNo(s));
+    const svg=cleanSVG(String(r.text||""));
+    if(!svg)throw new Error("bad svg");
+    const cur=S.shots.find(x=>x.id===id);
+    if(cur){const n=Object.assign({},cur,{sketch:svg,image:""});saveShot(n,0)}
+  }catch(e){aiErr(e)}
+  delete S.busy[id];renderProject();
+}
+
+/* ---------- shots ---------- */
+/* ---------- Claude credits ---------- */
+const RATE_IN=2,RATE_OUT=10;            // USD per million tokens, Claude Sonnet 5.5 list price
+const INR=95;                           // USD to INR (mid-market ~94.85, Nov 2026), rounded up
+const LIMIT_INR=500;                    // hard Claude budget per project, in rupees
+const KIND={sketch:"Sketch frame",brk:"Break brief",ext:"Extend shot",desc:"Describe look",imp:"Import script"};
+const EST={sketch:6,brk:3,ext:1,desc:1,imp:4};      // rough ₹ per action, used to block before running
+const tok=t=>Math.ceil(String(t||"").length/4);
+function usage(){const u=(S.project&&S.project.usage)||{};return{inr:u.inr!=null?u.inr:(u.usd||0)*INR,inTok:u.inTok||0,outTok:u.outTok||0,usd:u.usd||0,n:u.n||0,frames:u.frames||0,last:u.last||null,log:u.log||[]}}
+function remaining(){return LIMIT_INR-usage().inr}
+function canSpend(kind){const est=EST[kind]||2;if(remaining()<est){toast(`Claude budget reached for this film: ${KIND[kind]} needs ~₹${est}, ₹${Math.max(0,remaining()).toFixed(2)} left of ₹500. Free frames from Gemini or Pollinations still work.`);return false}return true}
+function fmtUsd(v){return "$"+(v<0.01?v.toFixed(4):v.toFixed(3))}
+function fmtInr(v){const r=v*INR;return rs(r)}
+function rs(r){r=+r||0;return "₹"+r.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function meter(kind,inText,outText,extraIn,label){
+  if(!S.project)return;const inT=tok(inText)+(extraIn||0),outT=tok(outText);
+  const usd=(inT*RATE_IN+outT*RATE_OUT)/1e6;const cr=+(usd*INR).toFixed(4);
+  const u=usage();const entry={t:Date.now(),kind,label:label||"",inT,outT,usd,cr};
+  const next={inr:+(u.inr+cr).toFixed(4),inTok:u.inTok+inT,outTok:u.outTok+outT,usd:u.usd+usd,n:u.n+1,frames:u.frames,last:entry,log:[entry].concat(u.log).slice(0,40)};
+  S.project=Object.assign({},S.project,{usage:next});saveProject(0);renderMeter();
+}
+function countFrame(){if(!S.project)return;const u=usage();S.project=Object.assign({},S.project,{usage:Object.assign({},u,{frames:u.frames+1})});saveProject(800);renderMeter()}
+function renderMeter(){
+  const el=$("#meter");if(!el)return;if(!S.pid||!S.project){el.innerHTML="";return}
+  const u=usage();const pct=Math.min(100,u.inr/LIMIT_INR*100);const L=u.last;
+  el.innerHTML=`<span>Claude budget</span><span class="bar ${pct>85?"hot":""}"><i style="width:${pct}%"></i></span><span><b>${rs(u.inr)}</b> of ₹500 · ${rs(Math.max(0,remaining()))} left</span>
+  <span>│ Last: ${L?`<b>${esc(KIND[L.kind]||L.kind)}${L.label?" · "+esc(L.label):""}</b> · ${L.inT.toLocaleString()} in / ${L.outT.toLocaleString()} out tokens · ≈${fmtInr(L.usd)}`:"no Claude generations yet"}</span>
+  <span>│ Image frames: <b>${u.frames}</b> (free, ${esc(GENS[genOf()].short)})</span><span class="sp"></span>
+  <span title="Rough estimate per action at Claude Sonnet 5.5 API rates">Est: sketch ~₹${EST.sketch} · break brief ~₹${EST.brk} · import ~₹${EST.imp} · extend ~₹${EST.ext}</span><button data-act="usage">Usage log</button>`;
+}
+function usageModal(){const u=usage();
+  const rows=u.log.map(e=>`<tr><td>${new Date(e.t).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</td><td>${esc(KIND[e.kind]||e.kind)}${e.label?" · "+esc(e.label):""}</td><td style="text-align:right">${e.inT.toLocaleString()}</td><td style="text-align:right">${e.outT.toLocaleString()}</td><td style="text-align:right">${fmtUsd(e.usd)}</td><td style="text-align:right">${fmtInr(e.usd)}</td></tr>`).join("");
+  openModal(`<h2>Claude usage · ${esc((S.project||{}).name||"")}</h2><p class="muted small" style="margin:0 0 10px">${rs(u.inr)} of ₹500 used (${u.n} generations, ${u.inTok.toLocaleString()} in / ${u.outTok.toLocaleString()} out tokens, ≈${fmtUsd(u.usd)}). Priced at Claude Sonnet 5.5 API rates ($2 in / $10 out per million tokens) at ₹${INR} per $. Claude actions stop once the film hits ₹500. These are API-equivalent estimates. In Storyroom, Claude runs on each person's own Claude plan. Image frames from Gemini or Pollinations cost ₹0.</p>
+  <div style="max-height:50vh;overflow:auto"><table style="width:100%;border-collapse:collapse;font:11.5px var(--mono)"><thead><tr style="color:var(--muted);text-align:left"><th>When</th><th>Action</th><th style="text-align:right">In</th><th style="text-align:right">Out</th><th style="text-align:right">USD</th><th style="text-align:right">INR</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="muted">Nothing yet</td></tr>'}</tbody></table></div><div class="row"><button data-close>Close</button></div>`)}
+/* ---------- Google Slides export & share ---------- */
+let MCP=null;
+async function getMcp(){if(MCP)return MCP;try{if(window.claude&&claude.use)MCP=await claude.use("mcp")}catch(e){}return MCP}
+function pickId(p){if(!p)return null;if(typeof p==="string"){const m=p.match(/"id"\s*:\s*"([^"]+)"/);return m?m[1]:null}return p.id||(p.file&&p.file.id)||null}
+function hexRgb(h){h=h.replace("#","");return{red:parseInt(h.slice(0,2),16)/255,green:parseInt(h.slice(2,4),16)/255,blue:parseInt(h.slice(4,6),16)/255}}
+function frameJpeg(s){return new Promise(res=>{
+  if(s.image&&/^data:image\/jpeg;base64,/.test(s.image))return res(s.image.split(",")[1]);
+  const src=frameSrc(s);if(!src)return res(null);
+  const im=new Image();im.onload=()=>{const [W,H]=arOf(S.project);const k=Math.min(1,1024/Math.max(W,H));const c=document.createElement("canvas");c.width=Math.round(W*k);c.height=Math.round(H*k);const x=c.getContext("2d");x.fillStyle="#f3f0e8";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",0.82).split(",")[1])};im.onerror=()=>res(null);im.src=src})}
+function mcpErrText(e){const c=e&&e.code;if(c==="server_not_connected")return`${e.server||"Google"} isn't connected. Add it in claude.ai Settings → Connectors, then try again.`;if(c==="needs_reauth")return`Reconnect ${e.server||"Google"} in claude.ai Settings → Connectors.`;if(c==="approval_required"||c==="not_in_manifest")return"Storyroom needs your OK to use Google Drive and Slides. Allow it when claude.ai asks, then try again.";if(c==="blocked_by_policy")return"Your organisation blocks this Google action.";return (e&&e.message)?String(e.message).slice(0,200):"Something went wrong talking to Google."}
+function exportFallback(why){const p=S.project||{};const cmd=`Export the "${p.name}" film from Storyroom · GRT to a Google Slides storyboard deck.`;
+  openModal(`<h2>Export to Google Slides</h2><p class="muted small">${esc(why||"Google export isn't available in this view.")}</p><p class="small">You can also ask Claude in chat to build the deck:</p><pre class="prompt">${esc(cmd)}</pre><div class="row"><button data-close>Close</button><button class="primary" id="copyExp">Copy message</button></div>`);$("#copyExp").onclick=()=>copyText(cmd,"Message")}
+async function exportDeck(){
+  const p=S.project;if(!p||!S.shots.length)return;
+  const mcp=await getMcp();if(!mcp)return exportFallback();
+  const log=[];const step=t=>{log.push(t);const b=$("#expLog");if(b)b.innerHTML=log.map(x=>`<div>${x}</div>`).join("")};
+  openModal(`<h2>Exporting to Google Slides</h2><p class="muted small">Building the deck in your Google Drive. Keep this tab open.</p><div id="expLog" class="small" style="font-family:var(--mono);line-height:1.7;margin-top:8px"></div><div class="row" id="expBtns"></div>`);
+  const temp=[];
+  try{
+    const title=`${p.name||"Storyboard"} · ${p.product||""} storyboard · GRT`;
+    step("Creating deck…");
+    const pres=await mcp.callTool("Google Drive","create_file",{title,contentMimeType:"application/vnd.google-apps.presentation"},{cache:false});
+    const pid=pickId(pres.payload);if(!pid)throw{message:"Google didn't return a deck id."};
+    const urls={};
+    for(let i=0;i<S.shots.length;i++){const s=S.shots[i];const b64=await frameJpeg(s);if(!b64){step(`Shot ${i+1}: no frame, text only`);continue}
+      step(`Uploading frame ${i+1} of ${S.shots.length}…`);
+      const up=await mcp.callTool("Google Drive","create_file",{title:`storyroom-${(p.name||"film").replace(/\W+/g,"-")}-shot${i+1}.jpg`,base64Content:b64,contentMimeType:"image/jpeg",disableConversionToGoogleType:true},{cache:false});
+      const fid=pickId(up.payload);if(!fid)continue;temp.push(fid);
+      await mcp.callTool("Google Drive","share_file",{fileId:fid,permissionId:"anyoneWithLink",role:"reader"},{cache:false});
+      urls[s.id]="https://drive.google.com/uc?export=view&id="+fid}
+    step("Laying out slides…");
+    const [W,H]=arOf(p);const ar=W/H;let iw,ih;if(ar<1){ih=365;iw=Math.round(ih*ar)}else if(ar===1){ih=iw=300}else{iw=400;ih=Math.round(iw/ar)}
+    const ix=25,iy=Math.round((405-ih)/2),tx=ix+iw+30,tw=720-tx-25;
+    const MAROON=hexRgb("#681015"),CREAM=hexRgb("#FFF7DE"),RED=hexRgb("#B8292F"),INK=hexRgb("#2a1b1c");
+    const pt=v=>({magnitude:v,unit:"PT"});const box=(id,page,x,y,w,h)=>({createShape:{objectId:id,shapeType:"TEXT_BOX",elementProperties:{pageObjectId:page,size:{width:pt(w),height:pt(h)},transform:{scaleX:1,scaleY:1,translateX:x,translateY:y,unit:"PT"}}}});
+    const style=(id,color,size,bold,range)=>({updateTextStyle:{objectId:id,textRange:range||{type:"ALL"},style:{foregroundColor:{opaqueColor:{rgbColor:color}},fontSize:pt(size),bold:!!bold,fontFamily:"Montserrat"},fields:"foregroundColor,fontSize,bold,fontFamily"}});
+    const bg=(page,c)=>({updatePageProperties:{objectId:page,pageProperties:{pageBackgroundFill:{solidFill:{color:{rgbColor:c}}}},fields:"pageBackgroundFill"}});
+    const pUrls={};for(const pr of S.products.slice(0,6)){if(!pr.photo||!/^data:image\/jpeg;base64,/.test(pr.photo))continue;step(`Uploading Prd ${pr.no}…`);
+      const up=await mcp.callTool("Google Drive","create_file",{title:`storyroom-prd${pr.no}.jpg`,base64Content:pr.photo.split(",")[1],contentMimeType:"image/jpeg",disableConversionToGoogleType:true},{cache:false});
+      const fid=pickId(up.payload);if(!fid)continue;temp.push(fid);await mcp.callTool("Google Drive","share_file",{fileId:fid,permissionId:"anyoneWithLink",role:"reader"},{cache:false});pUrls[pr.id]="https://drive.google.com/uc?export=view&id="+fid}
+    const reqs=[];const rt=runtime();
+    const sub=p.kind==="topical"?`${p.festival||"Festival"} topical${p.festDate?" · "+p.festDate:""}${p.tier?" · Tier "+p.tier:""}`:(p.row||"BAU");
+    reqs.push({createSlide:{objectId:"sr_cover",insertionIndex:0,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg("sr_cover",MAROON),
+      box("sr_ct","sr_cover",50,120,620,80),{insertText:{objectId:"sr_ct",text:p.name||"Storyboard"}},style("sr_ct",CREAM,36,true),
+      box("sr_cs","sr_cover",50,205,620,90),{insertText:{objectId:"sr_cs",text:`GRT Jewellers · ${p.product||""} · ${sub}\n${S.shots.length} shots · ${fmtTime(rt)} runtime · ${p.aspect||"16:9"}${p.inflName?" · Talent: "+p.inflName:""}\nStoryboard for approval · ${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}`}},style("sr_cs",hexRgb("#f2b8bb"),14,false));
+    const off=(S.products.length||continuityLock())?1:0;
+    if(off){reqs.push({createSlide:{objectId:"sr_look",insertionIndex:1,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg("sr_look",CREAM),box("sr_lh","sr_look",25,18,670,34),{insertText:{objectId:"sr_lh",text:"Products & continuity"}},style("sr_lh",MAROON,20,true));
+      const ps=S.products.slice(0,6);ps.forEach((pr,j)=>{const x=25+j*112;if(pUrls[pr.id])reqs.push({createImage:{objectId:"sr_pi"+j,url:pUrls[pr.id],elementProperties:{pageObjectId:"sr_look",size:{width:pt(100),height:pt(100)},transform:{scaleX:1,scaleY:1,translateX:x,translateY:62,unit:"PT"}}}});
+        reqs.push(box("sr_pl"+j,"sr_look",x,166,104,40),{insertText:{objectId:"sr_pl"+j,text:`Prd ${pr.no}${pr.name?"\n"+pr.name:""}`}},style("sr_pl"+j,INK,9,false))});
+      const lk=[lookText()&&`Outfit: ${lookText()}`,p.hair&&`Hair & makeup: ${p.hair}`,p.setLoc&&`Set: ${p.setLoc}`,p.tod&&`Time & light: ${p.tod}`,p.inflName&&`Talent: ${p.inflName}`].filter(Boolean).join("\n")||"Continuity: same talent, outfit, jewellery placement, set and light across all shots.";
+      reqs.push(box("sr_lt","sr_look",25,ps.length?220:62,670,160),{insertText:{objectId:"sr_lt",text:lk+"\n\nLocked across every frame unless a shot slide says otherwise."}},style("sr_lt",INK,12,false))}
+    let t=0;
+    S.shots.forEach((s,i)=>{const sid="sr_s"+i,tid="sr_t"+i,hid="sr_h"+i;
+      reqs.push({createSlide:{objectId:sid,insertionIndex:i+1+off,slideLayoutReference:{predefinedLayout:"BLANK"}}},bg(sid,CREAM));
+      if(urls[s.id])reqs.push({createImage:{objectId:"sr_i"+i,url:urls[s.id],elementProperties:{pageObjectId:sid,size:{width:pt(iw),height:pt(ih)},transform:{scaleX:1,scaleY:1,translateX:ix,translateY:iy,unit:"PT"}}}});
+      else reqs.push({createShape:{objectId:"sr_i"+i,shapeType:"RECTANGLE",elementProperties:{pageObjectId:sid,size:{width:pt(iw),height:pt(ih)},transform:{scaleX:1,scaleY:1,translateX:ix,translateY:iy,unit:"PT"}}}},{updateShapeProperties:{objectId:"sr_i"+i,shapeProperties:{shapeBackgroundFill:{solidFill:{color:{rgbColor:hexRgb("#e8dcc0")}}}},fields:"shapeBackgroundFill"}});
+      const head=`Shot ${i+1}  ·  ${fmtTime(t)}–${fmtTime(t+(+s.duration||0))}`;t+=+s.duration||0;
+      reqs.push(box(hid,sid,tx,iy,tw,34),{insertText:{objectId:hid,text:head}},style(hid,MAROON,20,true));
+      const cam=`${s.size} · ${s.angle} · ${s.lens}mm · ${s.move} · ${s.duration}s`;
+      const sup=(s.dlg?`\n\nDialogue: “${s.dlg}”`:"")+(s.vo?`\n\nSuper: “${s.vo}”`:"")+(needsQC(s)?"  [TO QC]":"");
+      const prl=shotProds(s).map(x=>"Prd "+x.no+(x.name?" ("+x.name+")":"")).join(", ");const oc=s.outfit&&s.outfit.trim()?`\nOutfit change: ${s.outfit}`:"";const cn=s.cont&&s.cont.trim()?`\nContinuity: ${s.cont}`:"";
+      const body=`${cam}\n\n${s.action||"(action to be written)"}${sup}${prl?"\n\nProducts: "+prl:""}${oc}${cn}\n\nStatus: ${STATUS[s.status]||s.status}`;
+      reqs.push(box(tid,sid,tx,iy+42,tw,ih-42),{insertText:{objectId:tid,text:body}},style(tid,INK,12,false),style(tid,RED,11,true,{type:"FIXED_RANGE",startIndex:0,endIndex:cam.length}));
+    });
+    reqs.push({deleteObject:{objectId:"p"}});
+    try{await mcp.callTool("Google Slides","update_presentation",{presentationId:pid,requests:reqs},{cache:false})}
+    catch(e){if(/objectId|not found|p\b/i.test(String(e&&e.message))){reqs.pop();await mcp.callTool("Google Slides","update_presentation",{presentationId:pid,requests:reqs},{cache:false})}else throw e}
+    step("Cleaning up temporary frame files…");
+    for(const fid of temp){try{await mcp.callTool("Google Drive","trash_file",{fileId:fid},{cache:false})}catch(e){}}
+    const deckUrl="https://docs.google.com/presentation/d/"+pid+"/edit";
+    S.project=Object.assign({},S.project,{deckId:pid,deckUrl,deckAt:Date.now()});saveProject(0);renderTop();
+    step(`<b style="color:var(--ok)">Done.</b> ${S.shots.length+1+((S.products.length||continuityLock())?1:0)} slides.`);
+    $("#expBtns").innerHTML=`<button data-close>Close</button><a class="btnlink" href="${esc(deckUrl)}" target="_blank" rel="noopener">Open deck ↗</a><button class="primary" data-act="share">Share deck</button>`;
+  }catch(e){
+    for(const fid of temp){try{await mcp.callTool("Google Drive","trash_file",{fileId:fid},{cache:false})}catch(x){}}
+    step(`<span style="color:var(--bad)">${esc(mcpErrText(e))}</span>`);if(e&&(e.code==="server_not_connected"||e.code==="not_granted"||e.code==="capability_disabled"))step("You can still ask Claude in chat to export it.");
+    $("#expBtns").innerHTML=`<button data-close>Close</button><button class="primary" data-act="export">Try again</button>`;
+  }
+}
+function shareModal(){const p=S.project||{};if(!p.deckUrl){toast("Export the deck first.");return}
+  openModal(`<h2>Share deck</h2><p class="muted small" style="margin:0">${esc(p.name)} · <a class="lnk" href="${esc(p.deckUrl)}" target="_blank" rel="noopener">open deck ↗</a></p>
+  <div class="lbl">Email addresses (comma separated)</div><input id="shEmails" placeholder="yogesh@grtjewels.com, team@socialbeat.in">
+  <div class="lbl">Access</div><select id="shRole"><option value="commenter">Can comment (recommended for client review)</option><option value="reader">Can view</option><option value="writer">Can edit</option></select>
+  <div class="row"><button class="primary" id="shSend">Share with these people</button></div>
+  <div class="sec">Or share by link</div><p class="hint">Anyone with the link can view. Use this for WhatsApp or email, but remember anyone it's forwarded to can open it.</p>
+  <div class="row"><button id="shLink">Create view link</button><button id="shCopy">Copy deck link</button></div><div id="shOut" class="small" style="margin-top:8px"></div>
+  <div class="row"><button data-close>Done</button></div>`);
+  $("#shCopy").onclick=()=>copyText(p.deckUrl,"Deck link");
+  $("#shSend").onclick=async()=>{const mcp=await getMcp();if(!mcp){$("#shOut").textContent="Sharing needs Google Drive connected in this view. Open the deck and use Google's Share button instead.";return}
+    const emails=$("#shEmails").value.split(/[\s,;]+/).map(x=>x.trim()).filter(x=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x));if(!emails.length){$("#shOut").textContent="Add at least one valid email.";return}
+    const role=$("#shRole").value;const ok=[],bad=[];$("#shSend").disabled=true;
+    for(const em of emails){try{await mcp.callTool("Google Drive","share_file",{fileId:p.deckId,emailAddress:em,role},{cache:false});ok.push(em)}catch(e){bad.push(em+" ("+mcpErrText(e)+")")}}
+    $("#shSend").disabled=false;$("#shOut").innerHTML=(ok.length?`<div style="color:var(--ok)">Shared with ${esc(ok.join(", "))}. Google emails them the link.</div>`:"")+(bad.length?`<div style="color:var(--bad)">Couldn't share with ${esc(bad.join("; "))}</div>`:"");
+    if(ok.length){S.project=Object.assign({},S.project,{sharedWith:Array.from(new Set((S.project.sharedWith||[]).concat(ok)))});saveProject(0)}};
+  $("#shLink").onclick=async()=>{const mcp=await getMcp();if(!mcp){$("#shOut").textContent="Open the deck and use Google's Share button to create a link.";return}
+    try{const r=await mcp.callTool("Google Drive","share_file",{fileId:p.deckId,permissionId:"anyoneWithLink",role:"reader"},{cache:false});const link=(r.payload&&r.payload.shareableLink)||p.deckUrl.replace("/edit","/view");
+      $("#shOut").innerHTML=`<div style="color:var(--ok)">View link ready:</div><pre class="prompt">${esc(link)}</pre>`;copyText(link,"View link")}catch(e){$("#shOut").textContent=mcpErrText(e)}};
+}
+function blankShot(order){return{id:uid(),order:order,action:"",vo:"",size:"Medium",angle:"Eye level",move:"Static",lens:35,duration:4,status:"draft",sketch:"",image:"",createdAt:Date.now()}}
+function selShot(){return S.shots.find(x=>x.id===S.sel)||null}
+function addShot(){
+  const order=S.shots.length?S.shots[S.shots.length-1].order+1:1;
+  const s=blankShot(order);S.shots.push(s);S.sel=s.id;Store.putShot(S.pid,s.id,s).then(touchProject);renderProject();
+  setTimeout(()=>{const t=$("#inspector textarea[data-s=action]");if(t)t.focus()},50);
+}
+function dupShot(){
+  const s=selShot();if(!s)return;const i=S.shots.indexOf(s);const nxt=S.shots[i+1];
+  const c=Object.assign({},s,{id:uid(),order:nxt?(s.order+nxt.order)/2:s.order+1,status:"draft",createdAt:Date.now()});
+  S.shots.splice(i+1,0,c);S.sel=c.id;Store.putShot(S.pid,c.id,c).then(touchProject);renderProject();
+}
+function delShot(){
+  const s=selShot();if(!s)return;const i=S.shots.indexOf(s);
+  S.shots.splice(i,1);delete S.pending[s.id];clearTimeout(timers[s.id]);
+  S.sel=(S.shots[i]||S.shots[i-1]||{}).id||null;
+  Store.delShot(S.pid,s.id).then(touchProject);renderProject();toast("Shot deleted");
+}
+function moveShot(dragId,targetId,before){
+  if(dragId===targetId)return;
+  const d=S.shots.find(x=>x.id===dragId);if(!d)return;
+  const rest=S.shots.filter(x=>x.id!==dragId);
+  let pos=rest.findIndex(x=>x.id===targetId);if(pos<0)return;if(!before)pos+=1;
+  const prev=rest[pos-1],next=rest[pos];
+  const order=prev&&next?(prev.order+next.order)/2:prev?prev.order+1:next?next.order-1:0;
+  const n=Object.assign({},d,{order});rest.splice(pos,0,n);S.shots=rest;saveShot(n,0);renderProject();
+}
+
+/* ---------- rendering: home ---------- */
+function showView(v){$("#home").classList.toggle("hidden",v!=="home");$("#project").classList.toggle("hidden",v!=="project")}
+function renderHome(){
+  showView("home");
+  $("#crumb").innerHTML="";
+  $("#topActions").innerHTML="";
+  const ps=S.projects;
+  let body;
+  if(ps==null)body=`<div class="empty"><span class="spin"></span>Loading storyboards…</div>`;
+  else if(!ps.length)body=`<div class="empty"><p style="font-size:16px;color:var(--text);margin:0 0 6px">No GRT films yet</p><p style="margin:0 0 16px">Start from the 30s product film structure, or paste a brief and let Claude break it into shots.</p><button class="primary" data-act="new">+ New GRT film</button></div>`;
+  else{const F=S.filter||"All";const shown=ps.filter(p=>F==="All"||(F==="Topicals"?p.kind==="topical":p.product===F));
+  body=`<div class="ftabs">${["All",...PRODUCTS,"Topicals"].map(x=>`<button class="chip ${x===F?"on":""}" data-filter="${x}">${x}</button>`).join("")}</div>`+(shown.length?`<div class="grid">${shown.map(p=>{const ini={"Gold":"Au","Diamond":"◇","Silver":"Ag","Silver Articles":"Ag·A"}[p.product]||"GRT";return`<div class="pcard" data-open="${esc(p.id)}"><div class="pthumb"><span class="ar">${esc(p.aspect||"16:9")}</span><span class="ini">${esc(ini)}</span></div><div class="pmeta"><span class="tag">${esc(p.product||"Gold")} · ${p.kind==="topical"?esc((p.festival||"Topical")+(p.festDate?" · "+p.festDate:"")+(p.tier?" · Tier "+p.tier:"")):esc(p.row||"BAU")}</span><b>${esc(p.name||"Untitled")}</b><span>${p.shotCount||0} shots · ${fmtTime(p.runtime)} · ${esc(ago(p.updatedAt))}</span></div></div>`}).join("")}</div>`:`<div class="empty">Nothing in ${esc(F)} yet.</div>`)}
+  $("#home").innerHTML=`<div class="homeHead"><div><h1>GRT Jewellers storyboards</h1><p class="muted">BAU rows and festival topicals for the production team. Build boards free, get Yogesh's approval, then take approved shots to Flow or Veo for video.</p></div>${ps&&ps.length?`<button class="primary" data-act="new">+ New GRT film</button>`:""}</div>${body}`;
+}
+function newProjectModal(){
+  openModal(`<h2>New GRT film</h2><p class="muted small" style="margin:0 0 4px">You can change all of this later.</p>
+  <div class="lbl">Film name</div><input id="npName" placeholder="Gold Row 1 · temple necklace film">
+  <div class="lbl">Product line</div><select id="npProduct">${PRODUCTS.map(p=>`<option>${p}</option>`).join("")}</select>
+  <div class="lbl">Type</div><select id="npKind">${Object.keys(KINDS).map(k=>`<option value="${k}">${KINDS[k]}</option>`).join("")}</select>
+  <div id="npBau"><div class="lbl">Row label</div><input id="npRow" placeholder="Gold Row 1"></div>
+  <div id="npTop" class="hidden"><div class="lbl">Festival</div><input id="npFest" placeholder="Karthigai Deepam"><div class="lbl">Festival date (confirm with Yogesh)</div><input id="npDate" type="date"><div class="lbl">Tier</div><select id="npTier">${Object.keys(TIERS).map(t=>`<option value="${t}">${TIERS[t]}</option>`).join("")}</select></div>
+  <div class="lbl">Format</div><select id="npAspect">${Object.keys(ASPECTS).map(a=>`<option>${a}</option>`).join("")}</select>
+  <div class="lbl">Brief or script (optional)</div><textarea id="npBrief" rows="6" placeholder="Paste the brief, script or your voice-note notes"></textarea>
+  <label class="small" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="npTpl" checked style="width:auto"> Start from the GRT 30s product film (6 shots)</label>
+  ${S.sample?`<label class="small" style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="npBreak" style="width:auto"> Instead, have Claude break the brief into shots</label>`:""}
+  <div class="row"><button data-close>Cancel</button><button class="primary" id="npCreate">Create</button></div>`);
+  setTimeout(()=>$("#npName").focus(),30);
+}
+async function createProject(){
+  const name=$("#npName").value.trim()||($("#npKind").value==="topical"?($("#npFest").value.trim()||"Festival")+" topical":($("#npRow").value.trim()||$("#npProduct").value+" Row 1")+" film");
+  const product=$("#npProduct").value,kind=$("#npKind").value;
+  const p={name,client:"GRT Jewellers",product,kind,row:kind==="bau"?($("#npRow").value.trim()||product+" Row 1"):"",festival:kind==="topical"?$("#npFest").value.trim():"",festDate:kind==="topical"?$("#npDate").value:"",tier:kind==="topical"?$("#npTier").value:"",aspect:$("#npAspect").value,brief:$("#npBrief").value.trim(),style:DEFAULT_STYLE,cast:PRODUCT_CAST[product]||"",bg:"",props:"",light:"",place:"",createdAt:Date.now(),updatedAt:Date.now(),shotCount:0,runtime:0};
+  const doBreak=$("#npBreak")&&$("#npBreak").checked&&p.brief;
+  const doTpl=!doBreak&&$("#npTpl")&&$("#npTpl").checked;
+  const pid=uid();closeModal();
+  const ok=await Store.putProject(pid,p);if(!ok)return;
+  if(doTpl){let o=0;for(const sh of grtTemplate(product)){o+=1;const s=Object.assign(blankShot(o),sh);await Store.putShot(pid,s.id,s)}p.shotCount=6;p.runtime=28;await Store.putProject(pid,p)}
+  openProject(pid,Object.assign({id:pid},p));
+  if(doBreak)setTimeout(breakBrief,300);
+}
+
+/* ---------- rendering: project ---------- */
+function openProject(pid,initial){
+  S.unsub.forEach(f=>{try{f()}catch(e){}});S.unsub=[];
+  S.pid=pid;S.project=initial||null;S.shots=[];S.shotsLoaded=false;S.sel=null;S.pending={};
+  if(location.hash!=="#p-"+pid){try{history.replaceState(null,"","#p-"+pid)}catch(e){location.hash="p-"+pid}}
+  S.infl=null;S.products=[];showView("project");renderProject();
+  S.products=[];S.unsub.push(Store.subProducts(pid,list=>{if(S.pid!==pid)return;S.products=list;if(!$("#briefPane").contains(document.activeElement))renderBrief();if(!$("#inspector").contains(document.activeElement))renderInspector();renderSB()},()=>{}));
+  Store.getRef(pid,"influencer").then(r=>{if(S.pid!==pid)return;S.infl=r||{};renderBrief()});
+  const tm=setTimeout(()=>{if(!S.shotsLoaded)banner("Can't reach saved data yet. What you see may be out of date.")},10000);
+  S.unsub.push(Store.subProject(pid,(p,meta)=>{
+    if(S.pid!==pid)return;
+    if(!p){if(meta&&!meta.fromCache&&!S.projPending){toast("That storyboard was deleted.");goHome()}return}
+    if(S.projPending)return;
+    S.project=p;renderTop();if(!$("#briefPane").contains(document.activeElement))renderBrief();renderViewer();renderMeter();
+  },e=>toast("Lost connection to this storyboard.")));
+  S.unsub.push(Store.subShots(pid,(list,meta)=>{
+    if(S.pid!==pid)return;
+    if(!meta||!meta.fromCache){S.shotsLoaded=true;clearTimeout(tm);banner(S.db?"":localNote())}
+    const ids=new Set(list.map(s=>s.id));
+    const merged=list.map(s=>S.pending[s.id]||s);
+    Object.keys(S.pending).forEach(k=>{if(!ids.has(k))merged.push(S.pending[k])});
+    merged.sort((a,b)=>a.order-b.order);
+    S.shots=merged;
+    if(!selShot())S.sel=S.shots[0]?S.shots[0].id:null;
+    renderTop();renderViewer();renderSB();
+    if(!$("#inspector").contains(document.activeElement))renderInspector();
+  },e=>{clearTimeout(tm);toast("Lost connection to the shots.")}));
+}
+function goHome(){
+  S.unsub.forEach(f=>{try{f()}catch(e){}});S.unsub=[];S.pid=null;S.project=null;
+  try{history.replaceState(null,"","#")}catch(e){}
+  renderHome();
+}
+function renderProject(){renderTop();renderBrief();renderViewer();renderInspector();renderSB();renderMeter()}
+function renderTop(){
+  if(!S.pid)return;
+  const p=S.project||{};
+  $("#crumb").innerHTML=`<b>${esc(p.name||"Loading…")}</b>${p.product?" · "+esc(p.product):""}${p.kind==="topical"&&p.festival?" · "+esc(p.festival):p.row?" · "+esc(p.row):""}`;
+  const has=S.shots.length>0;
+  $("#topActions").innerHTML=`<button data-act="shotlist" ${has?"":"disabled"} title="Copy as a table to paste into Sheets">Copy shot list</button><button data-act="prompts" ${has?"":"disabled"} title="Video prompts for Flow / Veo">Copy all prompts</button><button data-act="frames" ${has?"":"disabled"}>✦ Generate frames</button><button data-act="export" ${has?"":"disabled"}>⇪ Export to Slides</button>${p.deckUrl?`<button data-act="share">Share deck</button>`:""}<button class="primary" data-act="present" ${has?"":"disabled"}>▶ Play animatic</button>`;
+}
+function renderBrief(){
+  const p=S.project;const el=$("#briefPane");
+  if(!p){el.innerHTML=`<p class="muted" style="padding-top:14px"><span class="spin"></span>Loading…</p>`;return}
+  el.innerHTML=`
+  <div class="lbl">Project name</div><input data-p="name" value="${esc(p.name)}">
+  <div class="lbl">Product line</div><select data-p="product">${PRODUCTS.map(x=>`<option ${x===(p.product||"Gold")?"selected":""}>${x}</option>`).join("")}</select>
+  <div class="lbl">Type</div><select data-p="kind">${Object.keys(KINDS).map(k=>`<option value="${k}" ${k===(p.kind||"bau")?"selected":""}>${KINDS[k]}</option>`).join("")}</select>
+  ${(p.kind||"bau")==="bau"?`<div class="lbl">Row label</div><input data-p="row" value="${esc(p.row)}" placeholder="Gold Row 1">`:`<div class="lbl">Festival</div><input data-p="festival" value="${esc(p.festival)}"><div class="lbl"><span>Festival date</span><span class="warn">⚑ Yogesh confirms</span></div><input type="date" data-p="festDate" value="${esc(p.festDate)}"><div class="lbl">Tier</div><select data-p="tier">${Object.keys(TIERS).map(t=>`<option value="${t}" ${String(t)===String(p.tier)?"selected":""}>${TIERS[t]}</option>`).join("")}</select>`}
+  <div class="lbl">Format</div><select data-p="aspect">${Object.keys(ASPECTS).map(a=>`<option ${a===(p.aspect||"16:9")?"selected":""}>${a}</option>`).join("")}</select>
+  <div class="lbl">Brief / script</div><textarea data-p="brief" rows="9" placeholder="Paste the brief, script or call notes">${esc(p.brief)}</textarea>
+  ${S.sample?`<button class="primary" style="width:100%;margin-top:8px" data-act="break" ${S.busy.brk?"disabled":""}>${S.busy.brk?'<span class="spin"></span>Breaking into shots…':"✦ Break brief into shots"}</button><p class="hint">Adds shots after the last one. Nothing is overwritten.</p>`:`<p class="hint">Claude features are off in this view, so add shots by hand.</p>`}
+  <div class="row"><button data-act="importScript" style="flex:1">⇩ Paste PRISM script</button></div>
+  <div class="sec">Frame generator</div>
+  <select data-p="gen">${Object.keys(GENS).map(k=>`<option value="${k}" ${k===genOf()?"selected":""}>${GENS[k].label}</option>`).join("")}</select>
+  <p class="hint">${genOf()==="gemini"?"Free tier at gemini.google.com, with a daily image cap. Run one Gemini chat per film so her face stays consistent. Frames cost ₹0 of the Claude budget.":genOf()==="pollinations"?"Free, no login. It can't use a reference photo, so her face will vary. Use Gemini or ChatGPT when the face has to match.":genOf()==="canva"?"Canva's AI credits run out after a few images on a free plan.":"Free tier at gemini.google.com, with a daily image cap. Run one Gemini chat per film so her face stays consistent."}</p>
+  <div class="sec">Products <span>numbered like the calendar</span></div>
+  ${S.products.length?`<div class="pgrid">${S.products.map(pr=>`<div class="pcell"><div class="pimg" style="background-image:url('${pr.photo&&/^data:image\//.test(pr.photo)?pr.photo:""}')"></div><span class="pno">Prd ${pr.no}</span><button class="pdel" data-delprod="${esc(pr.id)}" title="Remove">×</button><input data-prod="${esc(pr.id)}" value="${esc(pr.name)}" placeholder="Name"></div>`).join("")}</div>`:`<p class="hint">Upload the exact pieces the film must show. Tag them per shot so every frame uses the real product.</p>`}
+  <div class="row"><button data-act="addprod">+ Upload product photos</button></div>
+  <div class="sec">Look &amp; continuity <span>locked in every frame</span></div>
+  <div class="lbl">Dress</div><select data-p="dress"><option value="">Choose a dress</option>${DRESSES.map(d=>`<option ${d===p.dress?"selected":""}>${esc(d)}</option>`).join("")}</select>
+  <div class="lbl">Colour</div><div class="chips">${COLOURS.map(c=>`<button class="chip ${c===p.dressColor?"on":""}" data-pchip="dressColor" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+  <div class="lbl">Dress details</div><input data-p="dressNote" value="${esc(p.dressNote)}" placeholder="e.g. zari border, elbow-length blouse, pallu over left shoulder">
+  <div class="lbl">Hair &amp; makeup</div><input data-p="hair" value="${esc(p.hair)}" placeholder="e.g. low bun with jasmine, soft dewy makeup">
+  <div class="lbl">Set / location</div><input data-p="setLoc" value="${esc(p.setLoc)}" placeholder="e.g. cream-and-gold living room with brass lamps">
+  <div class="lbl">Time &amp; light</div><select data-p="tod"><option value="">Choose</option>${TODS.map(t=>`<option ${t===p.tod?"selected":""}>${esc(t)}</option>`).join("")}</select>
+  ${lookText()?`<p class="hint">Locked look: <b style="color:var(--text)">${esc(lookText())}</b>. A shot can override it in its Continuity section.</p>`:""}
+  <div class="sec">Influencer <span>face in every frame</span></div>
+  <div class="infl"><div class="pic" ${S.infl&&S.infl.photo?`style="background-image:url('${S.infl.photo}')"`:""}>${S.infl&&S.infl.photo?"":S.infl==null?'<span class="spin"></span>':"No photo"}</div>
+   <div class="col"><input data-p="inflName" value="${esc(p.inflName)}" placeholder="Influencer name"><button data-act="inflPhoto">${S.infl&&S.infl.photo?"Change photo":"Upload photo"}</button>${S.sample&&S.infl&&S.infl.photo?`<button data-act="inflDescribe" ${S.busy.desc?"disabled":""}>${S.busy.desc?'<span class="spin"></span>Reading photo…':"✦ Describe look"}</button>`:""}</div></div>
+  <div class="lbl">Look notes</div><textarea data-p="inflLook" rows="3" placeholder="Late 20s, long wavy dark hair, warm brown skin, expressive eyes">${esc(p.inflLook)}</textarea>
+  <p class="hint">Keep this photo handy to attach in Gemini or ChatGPT. Check the influencer contract covers AI likeness.</p>
+  <div class="sec">Treatment <span>reused in every prompt</span></div>
+  <div class="lbl">Background colour</div><input data-p="bg" value="${esc(p.bg)}" placeholder="Cream #FFF7DE seamless">
+  <div class="lbl">Props</div><input data-p="props" value="${esc(p.props)}" placeholder="Brass diya, marigold petals, silk drape">
+  <div class="lbl">Lights &amp; shadows</div><input data-p="light" value="${esc(p.light)}" placeholder="Hard key from left, long soft shadow">
+  <div class="lbl">Product placement</div><input data-p="place" value="${esc(p.place)}" placeholder="Right third, copy space left">
+  <div class="lbl">Look &amp; feel</div><textarea data-p="style" rows="3" placeholder="e.g. warm golden-hour light, 35mm film grain, festive South Indian palette">${esc(p.style)}</textarea>
+  <div class="lbl">Model &amp; product</div><textarea data-p="cast" rows="4" placeholder="Asha: 30s, maroon silk saree, gold temple necklace. Product: 22K gold bangle set">${esc(p.cast)}</textarea>
+  <div class="sec">Danger zone</div>
+  <button class="ghost danger" data-act="delproj" style="width:100%">${S.confirmDel?"Click again to delete this storyboard":"Delete film"}</button>`;
+}
+function overlaySVG(s){
+  const st=`stroke="#e3c27a" stroke-width="2" fill="none" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+  let g="";
+  if(S.guides)g+=`<g stroke="rgba(255,255,255,.16)" stroke-width="1"><line x1="33.33" y1="0" x2="33.33" y2="100" vector-effect="non-scaling-stroke"/><line x1="66.66" y1="0" x2="66.66" y2="100" vector-effect="non-scaling-stroke"/><line x1="0" y1="33.33" x2="100" y2="33.33" vector-effect="non-scaling-stroke"/><line x1="0" y1="66.66" x2="100" y2="66.66" vector-effect="non-scaling-stroke"/></g>`;
+  if(S.overlay){
+    const m=s.move;const ah=(x1,y1,x2,y2)=>{const a=Math.atan2(y2-y1,x2-x1),L=3.2;return`<path d="M${x1} ${y1} L${x2} ${y2} M${x2-L*Math.cos(a-0.5)} ${y2-L*Math.sin(a-0.5)} L${x2} ${y2} L${x2-L*Math.cos(a+0.5)} ${y2-L*Math.sin(a+0.5)}" ${st}/>`};
+    if(m==="Pan left"||m==="Truck left")g+=ah(68,50,32,50);
+    else if(m==="Pan right"||m==="Truck right")g+=ah(32,50,68,50);
+    else if(m==="Tilt up"||m==="Crane up")g+=ah(50,68,50,32);
+    else if(m==="Tilt down"||m==="Crane down")g+=ah(50,32,50,68);
+    else if(m==="Dolly in"||m==="Zoom in")g+=`<rect x="25" y="25" width="50" height="50" ${st} stroke-dasharray="3 2"/>`+ah(6,6,22,22)+ah(94,6,78,22)+ah(6,94,22,78)+ah(94,94,78,78);
+    else if(m==="Dolly out")g+=`<rect x="25" y="25" width="50" height="50" ${st} stroke-dasharray="3 2"/>`+ah(22,22,6,6)+ah(78,22,94,6)+ah(22,78,6,94)+ah(78,78,94,94);
+    else if(m==="Orbit")g+=`<path d="M22 60 A28 12 0 1 0 50 48" ${st}/>`+ah(46,47.4,50,48);
+    else if(m==="Handheld")g+=`<path d="M30 50 q3 -4 6 0 t6 0 t6 0 t6 0 t6 0 t6 0" ${st}/>`;
+    else if(m==="Drone / aerial")g+=ah(30,72,70,30);
+    else if(m==="Turntable 360")g+=`<path d="M30 70 A20 7 0 1 0 50 63" ${st}/>`+ah(46,62.6,50,63);
+    else if(m==="Light sweep")g+=`<path d="M10 85 L40 15" ${st} stroke-dasharray="4 3"/><path d="M30 85 L60 15" ${st} stroke-dasharray="4 3"/>`+ah(60,50,88,50);
+    else if(m==="Rack focus")g+=`<circle cx="35" cy="50" r="8" ${st}/><circle cx="65" cy="50" r="8" ${st} stroke-dasharray="2 2"/>`+ah(45,50,55,50);
+  }
+  return `<svg class="ov" viewBox="0 0 100 100" preserveAspectRatio="none">${g}</svg>`;
+}
+function renderViewer(){
+  const v=$("#viewer");const [W,H]=arOf(S.project);
+  v.style.setProperty("--ar",W/H);v.style.setProperty("--arr",W+" / "+H);
+  const s=selShot();
+  if(!s){
+    v.innerHTML=`<div class="ph"><b>No shots yet</b><span>${S.sample?"Break the brief into shots, or add one in the Scenebuilder below.":"Add a shot in the Scenebuilder below."}</span></div>`;
+    $("#vnav").innerHTML="";return;
+  }
+  const i=S.shots.indexOf(s);const src=frameSrc(s);
+  v.innerHTML=`${src?`<img class="frame" alt="Shot ${i+1} frame" src="${src}">`:`<div class="ph"><b>${esc(s.size)} · ${esc(s.angle)}</b><span>${S.sample?"Generate a frame, then paste (Ctrl/Cmd+V) or drop it here.":"Generate a frame, then paste (Ctrl/Cmd+V) or drop it here."}</span></div>`}
+  ${overlaySVG(s)}
+  <span class="vb tl">${i+1} · ${esc(s.size)} · ${esc(s.angle)}</span>
+  <span class="vb tr">${ICON[s.move]||""} ${esc(s.move)} · ${s.lens}mm · ${s.duration}s</span>
+  ${(s.vo||s.dlg)?`<div class="vcap">${esc(s.vo||s.dlg)}</div>`:""}${needsQC(s)?'<span class="vb bl">TO QC</span>':""}`;
+  $("#vnav").innerHTML=`<button data-act="prev" ${i>0?"":"disabled"}>◀</button><span class="ct">Shot ${i+1} of ${S.shots.length}</span><button data-act="next" ${i<S.shots.length-1?"":"disabled"}>▶</button><button class="ghost tog ${S.guides?"on":""}" data-act="guides">Thirds</button><button class="ghost tog ${S.overlay?"on":""}" data-act="overlay">Camera move</button>`;
+}
+function chips(key,list,cur){return`<div class="chips">${list.map(v=>`<button class="chip ${String(v)===String(cur)?"on":""}" data-chip="${key}" data-v="${esc(v)}">${key==="lens"?v+"mm":(key==="move"?(ICON[v]||"")+" ":"")+esc(key==="lens"?"":v)}</button>`).join("")}</div>`}
+function videoPrompt(s){
+  const p=S.project||{};
+  const cam=`${s.size} shot, ${s.angle.toLowerCase()}, ${s.move==="Static"?"locked-off static camera":s.move.toLowerCase()+" camera move"}, ${s.lens}mm lens.`;
+  const tr=[p.bg&&`background ${p.bg}`,p.props&&`props: ${p.props}`,p.light&&`lighting: ${p.light}`,p.place&&`product placement: ${p.place}`].filter(Boolean).join("; ");
+  const pr=shotProds(s);
+  return [cam,s.action,pr.length?`Jewellery: ${pr.map(prodLabel).join(", ")}, exactly as in the product reference.`:`Hero product: GRT ${p.product||"Gold"} jewellery, sharp and readable.`,outfitOf(s)?`Wardrobe: ${outfitOf(s)}.`:"",continuityLock()?`Continuity: ${continuityLock()}.`:"",continuityLine(s),talent()?`Talent: ${talent()}.`:"",p.cast?`Characters: ${p.cast}`:"",tr?`Treatment: ${tr}.`:"",p.style?`Look: ${p.style}`:"",s.dlg?`Dialogue (lip-sync, as written): "${s.dlg}"`:"",s.vo?`On-screen super (English): "${s.vo}"`:"",`${s.duration}s, ${p.aspect||"16:9"}.`].filter(Boolean).join(" ");
+}
+function renderInspector(force){
+  const el=$("#inspector");const s=selShot();
+  if(!s){el.innerHTML=`<p class="muted" style="padding-top:14px">Select a shot in the Scenebuilder to set its camera and frame.</p>`;return}
+  const i=S.shots.indexOf(s);const busy=!!S.busy[s.id];
+  el.innerHTML=`
+  <div class="insHead"><b>Shot ${i+1}</b><select data-s="status">${Object.keys(STATUS).map(k=>`<option value="${k}" ${s.status===k?"selected":""}>${STATUS[k]}</option>`).join("")}</select></div>
+  <div class="lbl">Action / what we see</div><textarea data-s="action" rows="3" placeholder="What happens in this shot">${esc(s.action)}</textarea>
+  <div class="lbl">Dialogue / VO <span>as written</span></div><textarea data-s="dlg" rows="2" placeholder="Spoken line, in the script's language">${esc(s.dlg)}</textarea>
+  <div class="lbl"><span>Super (English)</span>${needsQC(s)?'<span class="qc">TO QC</span>':""}</div><textarea data-s="vo" rows="2" placeholder="On-screen super in English">${esc(s.vo)}</textarea>
+  ${needsQC(s)?'<p class="hint warn">Mentions a number, offer or claim. Send it through Assetz-style QC before it goes to Yogesh.</p>':""}
+  <div class="sec">Continuity</div>
+  ${continuityFlags(s).map(x=>`<div class="flag">⚠ ${esc(x)}</div>`).join("")}
+  <div class="lbl">Products in this shot</div>${S.products.length?`<div class="chips">${S.products.map(pr=>`<button class="chip tprod ${(s.prods||[]).includes(pr.id)?"on":""}" data-tprod="${esc(pr.id)}"><i style="background-image:url('${pr.photo&&/^data:image\//.test(pr.photo)?pr.photo:""}')"></i>Prd ${pr.no}${pr.name?" · "+esc(pr.name):""}</button>`).join("")}</div>`:`<p class="hint">Upload product photos in the left panel to tag them here.</p>`}
+  <div class="lbl"><span>Outfit</span><span>${s.outfit&&s.outfit.trim()?'<span class="warn">changed</span>':"locked"}</span></div><input data-s="outfit" value="${esc(s.outfit)}" placeholder="${esc(lookText()||"Same as the locked look")}">
+  <div class="lbl">Continuity note</div><input data-s="cont" value="${esc(s.cont)}" placeholder="e.g. picks up the diya from shot ${i}; turns left to right">
+  <div class="sec">Camera controls</div>
+  <div class="lbl">Shot size</div>${chips("size",SIZES,s.size)}
+  <div class="lbl">Angle</div>${chips("angle",ANGLES,s.angle)}
+  <div class="lbl">Movement</div>${chips("move",MOVES,s.move)}
+  <div class="lbl">Lens</div>${chips("lens",LENSES,s.lens)}
+  <div class="lbl"><span>Duration</span><span id="durV">${s.duration}s</span></div><input type="range" min="1" max="30" step="0.5" value="${s.duration}" data-s="duration">
+  <div class="sec">Frame</div>
+  <div class="row">${genOf()==="gemini"?`<button class="primary" data-copygem="${esc(s.id)}" style="flex:1">✦ Copy frame ${shotNo(s)} prompt for Gemini</button>`:`<a class="btnlink primary" href="${esc(genLink(s))}" target="_blank" rel="noopener" data-gen="${esc(s.id)}">✦ Generate in ${esc(GENS[genOf()].short)} ↗</a>`}</div>
+  <p class="hint">${genOf()==="gemini"?"Paste it into this film's Gemini chat (start one from ✦ Generate frames). Then copy Gemini's image and press Ctrl/Cmd+V here. Storyroom moves to the next shot.":genOf()==="pollinations"?"Opens the frame in a new tab. Right-click → Copy image, then click the frame here and press Ctrl/Cmd+V (or save it and drag it in).":`Copies the image prompt and opens ${esc(GENS[genOf()].short)}. ${genOf()!=="canva"?"Attach the influencer photo there, paste the prompt, then copy the result and paste it onto the frame here.":"Paste the prompt, then bring the frame back here."}`}</p>
+  <div class="row">${S.sample?`<button data-act="sketch" ${busy?"disabled":""}>${busy?'<span class="spin"></span>Sketching…':(s.sketch?"Re-sketch":"Pencil sketch")}</button>`:""}<button data-act="upload">Upload image</button></div>
+  ${frameSrc(s)?`<div class="row"><button class="ghost" data-act="clearframe">Remove frame</button></div>`:""}
+  ${s.canvaUrl&&/^https:\/\/([a-z0-9-]+\.)*canva\.com\//i.test(s.canvaUrl)?`<p style="margin:10px 0 0"><a class="lnk" href="${esc(s.canvaUrl)}" target="_blank" rel="noopener">Open Canva frame ↗</a></p>`:""}
+
+  <div class="sec">Image prompt <span>for any image generator</span></div>
+  <pre class="prompt">${esc(framePrompt(s))}</pre>
+  <div class="row"><button data-act="copyimg">Copy image prompt</button></div>
+  <div class="sec">Video prompt <span>for Flow / Veo, after approval</span></div>
+  <pre class="prompt" id="promptBox">${esc(videoPrompt(s))}</pre>
+  <div class="row"><button data-act="copyprompt">Copy prompt</button></div>
+  <div class="sec">Shot</div>
+  <div class="row"><button data-act="dup">Duplicate</button><button class="ghost danger" data-act="delshot">Delete</button></div>`;
+}
+function thumb(s){const src=frameSrc(s);return src?`<img alt="" src="${src}" draggable="false">`:""}
+function renderSB(){
+  const el=$("#sb");if(!S.pid){el.innerHTML="";return}
+  const sel=selShot();const si=sel?S.shots.indexOf(sel):-1;
+  let t=0;
+  const clips=S.shots.map((s,i)=>{const tc=fmtTime(t);t+=+s.duration||0;const w=Math.max(118,Math.min(300,s.duration*30));
+    return`<div class="clip ${s.id===S.sel?"sel":""}" draggable="true" data-id="${esc(s.id)}" style="width:${w}px" title="${esc(s.action)}"><div class="th">${thumb(s)}<span class="num">${i+1}</span><span class="mv">${ICON[s.move]||""}</span>${needsQC(s)?'<span class="qc">QC</span>':""}${continuityFlags(s).length?'<span class="cf">⚠</span>':""}${frameSrc(s)?"":`<span class="act">${esc(s.size)}${s.action?" · "+esc(s.action):""}</span>`}</div><div class="cap"><span>${tc}</span><span><i class="dot ${esc(s.status)}"></i>${s.duration}s</span></div></div>`}).join("");
+  const approved=S.shots.filter(s=>s.status==="approved").length;const rt=runtime();const isReel=(S.project||{}).format==="reel";const rtWarn=S.shots.length&&!isReel&&(rt<20||rt>40);const qcN=S.shots.filter(needsQC).length;const cfN=S.shots.filter(x=>continuityFlags(x).length).length;
+  el.innerHTML=`<div class="sbHead"><b>Scenebuilder</b><span class="muted small">${S.shots.length} shots · <span class="${rtWarn?"warn":""}">${fmtTime(rt)} runtime${rtWarn?" (GRT films run 20–40s)":""}</span>${S.shots.length?` · ${approved} approved by Yogesh`:""}${qcN?` · <span class="warn">${qcN} to QC</span>`:""}${cfN?` · <span class="warn">⚠ ${cfN} continuity</span>`:""}</span><span class="sp"></span>
+  ${S.sample?`<button data-act="extend" ${S.busy.ext?"disabled":""}>${S.busy.ext?'<span class="spin"></span>Extending…':(sel?`✦ Extend from shot ${si+1}`:"✦ Write opening shot")}</button>`:""}<button data-act="add">+ Add shot</button></div>
+  <div class="track" id="track">${clips}<button class="addClip" data-act="add" title="Add shot">+</button></div>`;
+  const c=el.querySelector(".clip.sel");if(c&&!renderSB.noScroll)c.scrollIntoView({block:"nearest",inline:"nearest"});
+}
+
+/* ---------- present (animatic) ---------- */
+let P=null;
+function present(){
+  if(!S.shots.length)return;
+  const start=Math.max(0,S.shots.indexOf(selShot()));
+  P={i:start,el:0,paused:false,last:performance.now(),raf:0};
+  $("#present").classList.remove("hidden");drawPresent();
+  const loop=now=>{if(!P)return;const dt=now-P.last;P.last=now;if(!P.paused){P.el+=dt;const s=S.shots[P.i];if(P.el>=(s.duration||4)*1000){if(P.i<S.shots.length-1){P.i++;P.el=0;drawPresent()}else{P.el=(s.duration||4)*1000;P.paused=true;drawPresent()}}}updBar();P.raf=requestAnimationFrame(loop)};
+  P.raf=requestAnimationFrame(loop);
+}
+function drawPresent(){
+  const s=S.shots[P.i];const [W,H]=arOf(S.project);const src=frameSrc(s);
+  const w=`min(92vw, calc(78vh * ${W/H}))`;
+  $("#present").innerHTML=`<div class="pframe" style="width:${w};aspect-ratio:${W} / ${H}">${src?`<img alt="" src="${src}">`:`<div class="ph"><b>${esc(s.size)} · ${esc(s.angle)}</b><span>${esc(s.action)}</span></div>`}${(s.vo||s.dlg)?`<div class="pcap">${esc(s.vo||s.dlg)}</div>`:""}</div>
+  <div class="pbar">${S.shots.map((x,j)=>`<div style="flex:${x.duration||4}"><i id="pb${j}" style="width:${j<P.i?100:0}%"></i></div>`).join("")}</div>
+  <div class="pctl"><button data-pa="prev">◀</button><button data-pa="play">${P.paused?"▶ Play":"❚❚ Pause"}</button><button data-pa="next">▶</button><span>Shot ${P.i+1}/${S.shots.length} · ${esc(s.size)} · ${esc(s.move)} · ${s.duration}s</span><button data-pa="close">Close (Esc)</button></div>`;
+}
+function updBar(){if(!P)return;const s=S.shots[P.i];const b=document.getElementById("pb"+P.i);if(b)b.style.width=Math.min(100,P.el/((s.duration||4)*10))+"%"}
+function closePresent(){if(!P)return;cancelAnimationFrame(P.raf);S.sel=S.shots[P.i]&&S.shots[P.i].id||S.sel;P=null;$("#present").classList.add("hidden");$("#present").innerHTML="";renderProject()}
+$("#present").addEventListener("click",e=>{const b=e.target.closest("[data-pa]");if(!b||!P)return;const a=b.dataset.pa;
+  if(a==="close")return closePresent();
+  if(a==="play"){if(P.paused&&P.i===S.shots.length-1&&P.el>=(S.shots[P.i].duration||4)*1000){P.i=0;P.el=0}P.paused=!P.paused;P.last=performance.now()}
+  if(a==="prev"){P.i=Math.max(0,P.i-1);P.el=0}
+  if(a==="next"){P.i=Math.min(S.shots.length-1,P.i+1);P.el=0}
+  drawPresent()});
+
+/* ---------- modal ---------- */
+function openModal(html){const m=$("#modal");m.innerHTML=`<div class="modal">${html}</div>`;m.classList.remove("hidden")}
+function closeModal(){$("#modal").classList.add("hidden");$("#modal").innerHTML=""}
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal"||e.target.closest("[data-close]"))closeModal();if(e.target.id==="npCreate")createProject();if(e.target.closest("#scriptAI"))importScript(true);if(e.target.closest("#scriptSimple"))importScript(false)});
+$("#modal").addEventListener("change",e=>{if(e.target.id==="npKind"){const t=e.target.value==="topical";$("#npBau").classList.toggle("hidden",t);$("#npTop").classList.toggle("hidden",!t)}if(e.target.id==="npTpl"&&e.target.checked&&$("#npBreak"))$("#npBreak").checked=false;if(e.target.id==="npBreak"&&e.target.checked)$("#npTpl").checked=false});
+$("#modal").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="npName")createProject()});
+
+/* ---------- images ---------- */
+function resizeImage(file){return new Promise((res,rej)=>{
+  const url=URL.createObjectURL(file);const im=new Image();
+  im.onload=()=>{const max=1024;let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+    const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);URL.revokeObjectURL(url);
+    let q=.82,d=c.toDataURL("image/jpeg",q);while(d.length>180000&&q>.35){q-=.08;d=c.toDataURL("image/jpeg",q)}
+    if(d.length>220000)return rej(new Error("too big"));res(d)};
+  im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("read"))};im.src=url})}
+function advance(reopen){const i=S.shots.indexOf(selShot());const nx=S.shots.slice(i+1).find(x=>!x.image)||null;
+  if(nx){S.sel=nx.id;renderViewer();renderInspector();renderSB();toast(`Frame added. Next up: shot ${shotNo(nx)}`)}else toast("Frame added. That's every shot.");
+  if(reopen&&genOf()==="gemini")geminiModal()}
+async function setImage(file){
+  const s=selShot();if(!s||!file||!/^image\//.test(file.type)){toast("Pick an image file.");return}
+  try{const d=await resizeImage(file);const cur=S.shots.find(x=>x.id===s.id);if(!cur)return;saveShot(Object.assign({},cur,{image:d,sketch:""}),0);countFrame();renderProject();toast("Frame added")}
+  catch(e){toast("Couldn't use that image.")}
+}
+document.addEventListener("click",e=>{
+  const g=e.target.closest("[data-gen]");if(g&&genOf()!=="pollinations"){const sh=S.shots.find(x=>x.id===g.dataset.gen);if(sh){try{navigator.clipboard.writeText(genOf()==="gemini"?(g.dataset.first?geminiSession():geminiPrompt(sh)):framePrompt(sh)).then(()=>toast("Prompt copied. Paste it in "+GENS[genOf()].short),()=>{})}catch(err){}}}
+  const pk=e.target.closest("[data-pick]");if(pk){S.pasteTarget=pk.dataset.pick;S.sel=pk.dataset.pick;readClipboardImage()}
+});
+function geminiModal(){
+  const rows=S.shots.map((x,i)=>`<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)"><b style="width:28px">${i+1}</b><span class="small" style="flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.size)} · ${esc(x.action||"(no action)")}</span>${x.image?'<span class="small" style="color:var(--ok)">✓ frame</span>':""}<button data-copygem="${esc(x.id)}">Copy prompt</button><button data-pick="${esc(x.id)}">Paste here</button></div>`).join("");
+  const done=S.shots.filter(x=>x.image).length;
+  openModal(`<h2>Generate frames · Gemini (free)</h2>
+  <ol class="small" style="padding-left:18px;color:var(--muted);line-height:1.6;margin:6px 0 10px">
+  <li><b style="color:var(--text)">Start session</b> copies a setup message with the look and the full shot list, then opens Gemini in a new tab.</li>
+  <li>In Gemini, ${S.infl&&S.infl.photo?"attach the influencer photo (it's in this film's Influencer section)":"attach the influencer's photo"}, paste the setup message and send. Gemini draws frame 1.</li>
+  <li>Copy Gemini's image (right-click → Copy image), then press <b style="color:var(--text)">Paste here</b> on that shot.</li>
+  <li>For each next shot, press <b style="color:var(--text)">Copy prompt</b>, paste it into the same Gemini chat, and repeat.</li></ol>
+  <div class="row" style="margin-bottom:6px"><a class="btnlink primary" href="https://gemini.google.com/app" target="_blank" rel="noopener" data-gen="${esc((S.shots[0]||{}).id||"")}" data-first="1">✦ Start Gemini session ↗</a></div>
+  <p class="hint">${done}/${S.shots.length} frames in. The free tier has a daily image cap that Google changes, so a 10-shot film may need two days, or two team members' accounts.</p>
+  ${rows}<div class="row"><button data-close>Done</button></div>`);
+}
+document.addEventListener("click",e=>{
+  const tp=e.target.closest("[data-tprod]");if(tp){const s=selShot();if(!s)return;const id=tp.dataset.tprod;const cur=(s.prods||[]).slice();const k=cur.indexOf(id);if(k>=0)cur.splice(k,1);else cur.push(id);saveShot(Object.assign({},s,{prods:cur}),300);renderInspector();renderSB();return}
+  const pc=e.target.closest("[data-pchip]");if(pc&&S.project){const k=pc.dataset.pchip,v=pc.dataset.v;S.project=Object.assign({},S.project,{[k]:S.project[k]===v?"":v});saveProject();renderBrief();renderInspector();return}
+  const dp=e.target.closest("[data-delprod]");if(dp){const id=dp.dataset.delprod;if(dp.dataset.sure!=="1"){dp.dataset.sure="1";dp.textContent="?";toast("Click × again to remove this product.");return}S.products=S.products.filter(x=>x.id!==id);Store.delProduct(S.pid,id);renderBrief();renderInspector();return}
+});
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.prod){const pr=prodById(t.dataset.prod);if(!pr)return;pr.name=t.value;clearTimeout(timers["pr"+pr.id]);timers["pr"+pr.id]=setTimeout(()=>Store.putProduct(S.pid,pr.id,pr),600)}});
+document.addEventListener("click",e=>{const c=e.target.closest("[data-copygem]");if(!c)return;const sh=S.shots.find(x=>x.id===c.dataset.copygem);if(!sh)return;S.pasteTarget=sh.id;
+  const txt=geminiPrompt(sh);(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast(`Frame ${shotNo(sh)} prompt copied. Paste it in Gemini, then paste the image back here.`),()=>copyText(txt,"Frame "+shotNo(sh)+" prompt"))});
+async function readClipboardImage(){
+  try{if(navigator.clipboard&&navigator.clipboard.read){const items=await navigator.clipboard.read();for(const it of items){const t=it.types.find(x=>x.startsWith("image/"));if(t){const blob=await it.getType(t);await setImage(new File([blob],"frame",{type:t}));S.pasteTarget=null;closeModal();advance(true);return}}}}catch(err){}
+  toast("Now press Ctrl/Cmd+V to paste the image onto shot "+(S.shots.findIndex(x=>x.id===S.pasteTarget)+1));
+}
+document.addEventListener("paste",e=>{
+  if(!S.pid||P)return;const t=e.target;if((t.tagName==="TEXTAREA"||t.tagName==="INPUT")&&!S.pasteTarget)return;
+  const items=(e.clipboardData&&e.clipboardData.items)||[];for(const it of items){if(it.type&&it.type.startsWith("image/")){const f=it.getAsFile();if(f){e.preventDefault();const reopen=!$("#modal").classList.contains("hidden");if(S.pasteTarget){S.sel=S.pasteTarget;S.pasteTarget=null;closeModal()}setImage(f).then(()=>advance(reopen));return}}}
+});
+$("#fileInput").addEventListener("change",e=>{const fl=Array.from(e.target.files||[]);const f=fl[0];e.target.value="";const tgt=S.fileTarget;S.fileTarget=null;e.target.multiple=false;if(!f)return;if(tgt==="prod"){addProducts(fl);return}if(tgt==="infl")setInfl(f);else setImage(f)});
+async function addProducts(files){let no=S.products.reduce((m,x)=>Math.max(m,x.no||0),0);let n=0;
+  for(const file of files.slice(0,20)){if(!/^image\//.test(file.type))continue;try{const d=await resizeImage(file);no+=1;const id=uid();const pr={no,name:file.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").slice(0,40),photo:d,createdAt:Date.now()};S.products.push(Object.assign({id},pr));await Store.putProduct(S.pid,id,pr);n++}catch(e){}}
+  renderBrief();renderInspector();toast(n?`${n} product photo${n>1?"s":""} added. Name them, then tag them per shot.`:"Couldn't use those images.")}
+async function setInfl(file){
+  if(!/^image\//.test(file.type)){toast("Pick an image file.");return}
+  try{const d=await resizeImage(file);S.infl=Object.assign({},S.infl||{},{photo:d,updatedAt:Date.now()});renderBrief();const ok=await Store.putRef(S.pid,"influencer",S.infl);if(ok)toast("Influencer photo saved")}catch(e){toast("Couldn't use that image.")}
+}
+function dataUrlBlob(u){const [h,b]=u.split(",");const bin=atob(b);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:(h.match(/data:([^;]+)/)||[])[1]||"image/jpeg"})}
+async function describeInfl(){
+  if(!S.sample||!S.infl||!S.infl.photo)return;if(!canSpend("desc"))return;S.busy.desc=true;renderBrief();
+  try{let ok=false;try{const l=await S.sample.limits();ok=!!(l&&l.images)}catch(e){}
+    if(!ok){toast("Photo reading isn't available here. Type the look notes instead.");throw 0}
+    const DQ="Describe this person's appearance for an image-generation prompt so a model can keep them consistent across frames: approximate age range, face shape, skin tone, hair (length, texture, colour, style), eyebrows, distinctive features. One line, comma-separated, no names, no guesses about identity, ethnicity labels or personality.";
+    const r=await S.sample(DQ,{images:[dataUrlBlob(S.infl.photo)],modelTier:"default"});meter("desc",DQ,String(r.text||""),1600);
+    const t=String(r.text||"").trim().slice(0,400);if(t){S.project=Object.assign({},S.project,{inflLook:t});saveProject(0)}
+  }catch(e){if(e&&e.code)aiErr(e)}
+  S.busy.desc=false;renderBrief();
+}
+function camGuess(v){v=(v||"").toLowerCase();let size="Medium",angle="Eye level",move="Static",lens=50;
+  if(/exterior|signage|showroom|walks|steps in|enters|entrance|floor|laid out|everything/.test(v)){size="Wide";lens=35}
+  if(/neckline|holds .* to her|turns for the camera|mirror|tries/.test(v)){size="Medium close-up";lens=50}
+  if(/close-?up|detail|lingers|stones|cuts|engrav/.test(v)){size="Close-up";lens=85}
+  if(/extreme close|macro|texture/.test(v)){size="Macro";lens=100}
+  if(/^(phone|screen)|notes screen|phone screen/.test(v)){size="Insert";lens=50}
+  if(/walks|steps in|exits|follows|enters/.test(v))move="Truck right";else if(/turns|holds|picks up/.test(v))move="Handheld";else if(/lingers|close/.test(v))move="Dolly in";
+  if(/over (her|his) shoulder/.test(v))angle="Over the shoulder";if(/looking down|tray|counter/.test(v)&&size!=="Wide")angle="High angle";
+  return{size,angle,move,lens}}
+function parsePrism(txt){
+  const rows=txt.replace(/\r/g,"").split("\n").map(l=>l.split("\t")).filter(c=>c.length>=3&&/^\s*\d+\s*[–—-]\s*\d+\s*s?\s*$/i.test(c[0]));
+  if(rows.length<2)return null;
+  const clean=x=>String(x||"").trim().replace(/^[“"]+|[”"]+$/g,"").trim();const none=x=>/^[—–-]?$/.test(String(x||"").trim());
+  const meta=(txt.match(/Ready\s*[—–-]\s*([^\n]+)/)||[])[1]||"";
+  const shots=rows.map(c=>{const m=c[0].match(/(\d+)\s*[–—-]\s*(\d+)/);const dur=Math.max(1,(+m[2])-(+m[1]));const visual=clean(c[1]);
+    return normShot(Object.assign({action:visual,dlg:clean(c[2]),vo:none(c[3])?"":clean(c[3]),duration:dur},camGuess(visual)))});
+  return{shots,meta}}
+function simpleSplit(txt){
+  const lines=txt.replace(/\r/g,"").split("\n");const blocks=[];let cur=null;
+  const start=/^\s*(?:(?:shot|frame|scene|f|sc)\s*[-#:]?\s*\d+\s*[:.\)\-]?|\d+\s*[\.\):-])\s*/i;
+  for(const l of lines){if(start.test(l)){cur=[l.replace(start,"").trim()];blocks.push(cur)}else if(cur&&l.trim())cur.push(l.trim())}
+  if(!blocks.length)txt.split(/\n\s*\n/).forEach(b=>{if(b.trim())blocks.push(b.trim().split("\n"))});
+  return blocks.map(b=>{let vo=[],act=[],dur=4;b.forEach(l=>{const m=l.match(/^(super|vo|v\.o\.|voice ?over|text|copy|ost)\s*[:\-]\s*(.*)$/i);if(m)vo.push(m[2]);const d=l.match(/(\d+(?:\.\d+)?)\s*(?:s|sec|secs|seconds)\b/i);if(d)dur=+d[1];if(!m&&l)act.push(l.replace(/[\(\[]?\s*\d+(?:\.\d+)?\s*(?:s|sec|secs|seconds)\b\s*[\)\]]?/i,"").trim())});return normShot({action:act.join(" "),vo:vo.join(" / "),duration:dur})}).filter(x=>x.action||x.vo);
+}
+async function importScript(useAI){
+  const txt=($("#scriptIn").value||"").trim();if(!txt){toast("Paste a script first.");return}
+  const replace=$("#scriptReplace").checked;let list=[];
+  const btn=useAI?$("#scriptAI"):$("#scriptSimple");if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>Importing…'}
+  try{
+    const prism=parsePrism(txt);if(prism){S.projPending=true;S.project=Object.assign({},S.project,{format:"reel"})}
+    if(useAI&&!canSpend("imp")){if(btn){btn.disabled=false;btn.textContent="✦ Import with Claude"}return}
+    if(prism){list=prism.shots;
+      if(useAI){const IQ=`These are the shots of a GRT Jewellers reel, already written. Do NOT change any words. For each shot choose only the camera.\n${ctx()}\n\nShots:\n${list.map((x,i)=>`${i+1}. ${x.action}`).join("\n")}\n\nReturn JSON only: {"cams":[{"size":...,"angle":...,"move":...,"lens":...}]} with one entry per shot, in order. ${SPEC.replace(/, "duration"[^`]*$/,"")}`;
+        try{const res=await askJSON(IQ);meter("imp",IQ,LAST_OUT,0,"PRISM camera");const cams=(res&&res.cams)||[];list=list.map((x,i)=>{const c=cams[i]||{};return Object.assign({},x,{size:pick(c.size,SIZES,x.size),angle:pick(c.angle,ANGLES,x.angle),move:pick(c.move,MOVES,x.move),lens:LENSES.includes(+c.lens)?+c.lens:x.lens})})}catch(e){if(e&&e.code==="budget")throw e}}
+      S.project=Object.assign({},S.project,{format:"reel",prismMeta:prism.meta||S.project.prismMeta||""});
+    }else
+    if(useAI){const IQ=`Convert this GRT Jewellers ad script into a storyboard shot list.\n${ctx()}\n\nRules: keep every super and VO line word for word (never rewrite or invent copy, prices, offers or numbers). One shot per frame/scene in the script, in order. Put camera directions from the script into size/angle/move/lens; if none, choose ones that showcase the jewellery. Use durations from the script if given.\nReturn JSON only: {"shots":[{"action":..., "vo":..., ${SPEC}}]}\n\nSCRIPT:\n${txt}`;const res=await askJSON(IQ);meter("imp",IQ,LAST_OUT);list=((res&&res.shots)||[]).map(normShot)}
+    if(!prism&&!useAI)list=simpleSplit(txt);
+    if(!list.length){toast("Couldn't find shots in that script.");if(btn){btn.disabled=false;btn.textContent=useAI?"✦ Import + Claude picks camera":"Import as written"}return}
+    if(replace){for(const s of S.shots.slice()){await Store.delShot(S.pid,s.id)}S.shots=[];S.pending={}}
+    let base=S.shots.length?S.shots[S.shots.length-1].order:0;const made=[];
+    for(const o of list.slice(0,40)){base+=1;const s=Object.assign(blankShot(base),o);made.push(s);S.shots.push(s);await Store.putShot(S.pid,s.id,s)}
+    if(prism||!(S.project.brief||"").trim())S.project=Object.assign({},S.project,{brief:(prism&&prism.meta?"PRISM · "+prism.meta+"\n\n":"")+txt.slice(0,20000)});
+    saveProject(0);S.sel=made[0].id;closeModal();renderProject();toast(`Imported ${made.length} shots`);
+  }catch(e){if(btn){btn.disabled=false;btn.textContent=useAI?"✦ Import + Claude picks camera":"Import as written"}aiErr(e)}
+}
+const viewer=$("#viewer");
+viewer.addEventListener("dragover",e=>{if(S.dragId||!selShot())return;e.preventDefault();viewer.classList.add("drop")});
+viewer.addEventListener("dragleave",()=>viewer.classList.remove("drop"));
+viewer.addEventListener("drop",e=>{viewer.classList.remove("drop");if(S.dragId)return;e.preventDefault();const f=e.dataTransfer.files&&e.dataTransfer.files[0];if(f)setImage(f)});
+
+/* ---------- events ---------- */
+$("#homeBtn").addEventListener("click",()=>{if(S.pid)goHome()});
+document.addEventListener("click",e=>{
+  const ft=e.target.closest("[data-filter]");if(ft){S.filter=ft.dataset.filter;renderHome();return}
+  const open=e.target.closest("[data-open]");if(open){const p=(S.projects||[]).find(x=>x.id===open.dataset.open);openProject(open.dataset.open,p);return}
+  const clip=e.target.closest(".clip");if(clip&&!e.target.closest("[data-act]")){S.sel=clip.dataset.id;renderSB.noScroll=true;renderViewer();renderInspector();renderSB();renderSB.noScroll=false;return}
+  const ch=e.target.closest("[data-chip]");
+  if(ch){const s=selShot();if(!s)return;const k=ch.dataset.chip;const v=k==="lens"?+ch.dataset.v:ch.dataset.v;saveShot(Object.assign({},s,{[k]:v}),300);renderViewer();renderInspector();renderSB();return}
+  const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+  if(a!=="delproj")S.confirmDel=false;
+  switch(a){
+    case"new":newProjectModal();break;
+    case"break":breakBrief();break;
+    case"extend":extendShot();break;
+    case"add":addShot();break;
+    case"dup":dupShot();break;
+    case"delshot":delShot();break;
+    case"sketch":sketchFrame();break;
+    case"upload":$("#fileInput").click();break;
+    case"clearframe":{const s=selShot();if(s){saveShot(Object.assign({},s,{image:"",sketch:""}),0);renderProject()}break}
+    case"prev":{const i=S.shots.indexOf(selShot());if(i>0){S.sel=S.shots[i-1].id;renderViewer();renderInspector();renderSB()}break}
+    case"next":{const i=S.shots.indexOf(selShot());if(i<S.shots.length-1){S.sel=S.shots[i+1].id;renderViewer();renderInspector();renderSB()}break}
+    case"guides":S.guides=!S.guides;renderViewer();break;
+    case"overlay":S.overlay=!S.overlay;renderViewer();break;
+    case"copyprompt":{const s=selShot();if(s)copyText(videoPrompt(s),"Prompt");break}
+    case"prompts":copyText(S.shots.map((s,i)=>`Shot ${i+1} (${s.duration}s)\n${videoPrompt(s)}`).join("\n\n"),"All prompts");break;
+    case"shotlist":{const pj=S.project||{};const label=pj.kind==="topical"?`${pj.festival||"Topical"}${pj.festDate?" ("+pj.festDate+")":""} · ${TIERS[pj.tier]||""}`:(pj.row||"");const rows=[["Film","Product","#","Start","Duration","Shot size","Angle","Movement","Lens","Action","Super (EN)","QC","Status","Image prompt","Canva frame","Video prompt"]];let t=0;
+      S.shots.forEach((s,i)=>{rows.push([label||pj.name,pj.product||"",i+1,fmtTime(t),s.duration+"s",s.size,s.angle,s.move,s.lens+"mm",s.action,s.vo,needsQC(s)?"To QC":"",STATUS[s.status]||s.status,framePrompt(s),s.canvaUrl||"",videoPrompt(s)]);t+=+s.duration||0});
+      copyText(rows.map(r=>r.map(c=>String(c).replace(/[\t\n]+/g," ")).join("\t")).join("\n"),"Shot list");break}
+    case"present":present();break;
+    case"export":exportDeck();break;
+    case"addprod":S.fileTarget="prod";$("#fileInput").multiple=true;$("#fileInput").click();break;
+    case"share":shareModal();break;
+    case"usage":usageModal();break;
+    case"copyimg":{const s=selShot();if(s)copyText(framePrompt(s),"Image prompt");break}
+    case"frames":{const g=genOf();if(g==="gemini"){geminiModal();break}const rows=S.shots.map((x,i)=>`<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)"><b style="width:28px">${i+1}</b><span class="small" style="flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.size)} · ${esc(x.action||"(no action)")}</span>${frameSrc(x)&&x.image?'<span class="small" style="color:var(--ok)">has frame</span>':""}<a class="btnlink" href="${esc(genLink(x))}" target="_blank" rel="noopener" data-gen="${esc(x.id)}">Open ↗</a><button data-pick="${esc(x.id)}">Paste here</button></div>`).join("");
+      openModal(`<h2>Generate frames · ${esc(GENS[g].short)}</h2><p class="muted small" style="margin:0 0 8px">${g==="pollinations"?"Free, no login. Open a shot, right-click the image → Copy image, then press <b>Paste here</b> for that shot. Leave about 15 seconds between shots, because the free tier is rate-limited. All shots share one seed so the look stays close.":`Each Open copies that shot's prompt and opens ${esc(GENS[g].short)}. Attach the influencer photo there once, paste each prompt, then copy the image and press <b>Paste here</b>.`}</p>${rows}<div class="row"><button data-close>Done</button></div>`);break}
+    case"importScript":openModal(`<h2>Import PRISM script</h2>
+      <ol class="small" style="padding-left:18px;color:var(--muted);line-height:1.6;margin:6px 0 8px"><li>In <a class="lnk" href="https://grtscripts.sbprism.com/" target="_blank" rel="noopener">GRT Script Studio ↗</a>, drag-select the full script table, from <b style="color:var(--text)">TIME</b> down to the last row, then copy it (Ctrl/Cmd+C).</li><li>Paste it below. Storyroom reads each row as a shot: time sets the duration, Visual becomes the action, Dialogue and Super stay word for word, and a camera is suggested from the visual.</li></ol>
+      <p class="hint" style="margin:0 0 6px">Or skip the copy-paste: ask Claude in chat to "import the PRISM script open in my browser into ${esc((S.project||{}).name||"this film")}".</p>
+      <textarea id="scriptIn" rows="10" placeholder="Paste the PRISM script table here"></textarea>
+      <label class="small" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="scriptReplace" ${S.shots.every(x=>!frameSrc(x)&&x.status==="draft")?"checked":""} style="width:auto"> Replace the current shots</label>
+      <div class="row"><button data-close>Cancel</button><button id="scriptSimple">Import as written</button>${S.sample?`<button class="primary" id="scriptAI">✦ Import + Claude picks camera</button>`:""}</div>`);break;
+    case"inflPhoto":S.fileTarget="infl";$("#fileInput").click();break;
+    case"inflDescribe":describeInfl();break;
+    case"delproj":if(!S.confirmDel){S.confirmDel=true;renderBrief();setTimeout(()=>{if(S.confirmDel){S.confirmDel=false;if(S.pid)renderBrief()}},4000)}else{S.confirmDel=false;const pid=S.pid;S.projPending=true;goHome();Store.delProject(pid).then(ok=>{S.projPending=false;if(ok)toast("Storyboard deleted")})}break;
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.p&&S.project){S.project=Object.assign({},S.project,{[t.dataset.p]:t.value});saveProject();if(t.dataset.p==="aspect")renderViewer();if(t.dataset.p==="kind"){renderBrief();renderTop()}if(t.dataset.p==="gen"){renderBrief();renderInspector()}if(["dress","dressNote","hair","setLoc","tod"].includes(t.dataset.p)){if(t.tagName==="SELECT")renderBrief();renderInspector()}if(t.dataset.p==="product"||t.dataset.p==="row"||t.dataset.p==="festival")renderTop();if(t.dataset.p==="name"||t.dataset.p==="client")renderTop();const pb=$("#promptBox");const s=selShot();if(pb&&s)pb.textContent=videoPrompt(s);return}
+  if(t.dataset.s){const s=selShot();if(!s)return;let v=t.value;if(t.dataset.s==="duration"){v=+v;const dv=$("#durV");if(dv)dv.textContent=v+"s"}
+    saveShot(Object.assign({},s,{[t.dataset.s]:v}),t.dataset.s==="status"?0:600);renderViewer();renderSB.noScroll=true;renderSB();renderSB.noScroll=false;const pb=$("#promptBox");if(pb)pb.textContent=videoPrompt(selShot())}
+});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.p==="aspect"){renderViewer();renderSB()}});
+/* drag reorder */
+document.addEventListener("dragstart",e=>{const c=e.target.closest&&e.target.closest(".clip");if(!c)return;S.dragId=c.dataset.id;c.classList.add("dragging");try{e.dataTransfer.setData("text/plain",c.dataset.id);e.dataTransfer.effectAllowed="move"}catch(x){}});
+document.addEventListener("dragend",()=>{S.dragId=null;document.querySelectorAll(".clip").forEach(c=>c.classList.remove("dragging","dropB","dropA"))});
+document.addEventListener("dragover",e=>{if(!S.dragId)return;const c=e.target.closest&&e.target.closest(".clip");if(!c)return;e.preventDefault();const r=c.getBoundingClientRect();const before=e.clientX<r.left+r.width/2;document.querySelectorAll(".clip").forEach(x=>x.classList.remove("dropB","dropA"));c.classList.add(before?"dropB":"dropA")});
+document.addEventListener("drop",e=>{if(!S.dragId)return;const c=e.target.closest&&e.target.closest(".clip");if(!c)return;e.preventDefault();const r=c.getBoundingClientRect();const before=e.clientX<r.left+r.width/2;const id=S.dragId;S.dragId=null;moveShot(id,c.dataset.id,before)});
+document.addEventListener("keydown",e=>{
+  if(P){if(e.key==="Escape")closePresent();else if(e.key===" "){e.preventDefault();P.paused=!P.paused;P.last=performance.now();drawPresent()}else if(e.key==="ArrowRight"){P.i=Math.min(S.shots.length-1,P.i+1);P.el=0;drawPresent()}else if(e.key==="ArrowLeft"){P.i=Math.max(0,P.i-1);P.el=0;drawPresent()}return}
+  if(e.key==="Escape"&&!$("#modal").classList.contains("hidden")){closeModal();return}
+  if(!S.pid||isTyping()||!$("#modal").classList.contains("hidden"))return;
+  const i=S.shots.indexOf(selShot());
+  if(e.key==="ArrowRight"&&i<S.shots.length-1){S.sel=S.shots[i+1].id;renderViewer();renderInspector();renderSB()}
+  if(e.key==="ArrowLeft"&&i>0){S.sel=S.shots[i-1].id;renderViewer();renderInspector();renderSB()}
+});
+window.addEventListener("hashchange",route);
+
+/* ---------- boot ---------- */
+function localNote(){return"Shared saving isn't available in this view, so storyboards are saved in this browser only."}
+function route(){
+  const m=location.hash.match(/^#p-([a-z0-9]+)$/i);
+  if(m){if(S.pid!==m[1]){const p=(S.projects||[]).find(x=>x.id===m[1]);openProject(m[1],p)}}
+  else if(S.pid)goHome();
+}
+async function boot(){
+  renderHome();
+  let db=null,sample=null;
+  if(window.claude&&typeof window.claude.use==="function"){
+    try{const r=await Promise.all([window.claude.use("db").catch(()=>null),window.claude.use("sample").catch(()=>null)]);db=r[0];sample=r[1]}catch(e){}
+  }
+  S.db=db;S.sample=sample;Store=db?DBStore:LocalStore;
+  if(!db)banner(localNote());
+  const tm=setTimeout(()=>{if(S.projects==null){S.projects=[];renderHome();banner("Can't reach saved storyboards yet. Check your connection; this page keeps trying.")}},10000);
+  Store.subProjects(list=>{clearTimeout(tm);S.projects=list;if(!S.pid)renderHome()},e=>{clearTimeout(tm);if(S.projects==null)S.projects=[];if(!S.pid)renderHome();toast("Lost connection to saved storyboards.")});
+  route();
+  if(S.pid)renderProject();
+}
+boot();
+})();
+</script>
+</body>
+</html>
