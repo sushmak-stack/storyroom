@@ -157,6 +157,22 @@ a.lnk{color:var(--gold)}
 .pbar div i{display:block;height:100%;background:var(--gold);width:0}
 .pctl{display:flex;gap:8px;align-items:center;color:var(--muted);font:12px var(--mono)}
 /* modal & toast */
+.lb{position:fixed;inset:0;z-index:80;background:#0d0708;display:flex;flex-direction:column}
+.lb.hidden{display:none}
+.lb .lbtop{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.lb .lbtop b{font-size:14px}.lb .lbtop .muted{font:12px var(--mono);color:var(--muted)}
+.lb .lbtop .sp{flex:1}
+.lb .stage{flex:1;position:relative;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px}
+.lb .stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;cursor:zoom-in;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.lb .stage.zoom{align-items:flex-start;justify-content:flex-start}
+.lb .stage.zoom img{max-width:none;max-height:none;cursor:zoom-out}
+.lb .nav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:64px;border-radius:8px;background:rgba(36,22,23,.85);border:1px solid var(--line);color:var(--text);font-size:22px;cursor:pointer;z-index:2}
+.lb .nav.l{left:12px}.lb .nav.r{right:12px}.lb .nav:disabled{opacity:.25;cursor:default}
+.lb .strip{display:flex;gap:6px;padding:8px 16px 12px;overflow-x:auto;border-top:1px solid var(--line)}
+.lb .strip i{flex:none;width:56px;height:56px;border-radius:6px;background:#1b1112 center/cover no-repeat;border:2px solid transparent;cursor:pointer;opacity:.6}
+.lb .strip i.on{border-color:var(--gold);opacity:1}
+.pimg,.castcard .pic.has{cursor:zoom-in}
+.viewer img.frame{cursor:zoom-in}
 .modalBack{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;width:min(560px,100%);max-height:90vh;overflow:auto}
 .modal h2{margin:0 0 6px;font-size:19px}
@@ -190,6 +206,7 @@ a.lnk{color:var(--gold)}
 </div>
 <div id="present" class="present hidden"></div>
 <div id="modal" class="modalBack hidden"></div>
+<div id="lb" class="lb hidden" role="dialog" aria-modal="true" aria-label="Image viewer"></div>
 <div id="toast" class="toast"></div>
 <input type="file" id="fileInput" accept="image/*" hidden>
 
@@ -746,7 +763,7 @@ function renderTop(){
 function grp(key,title,note,body){return `<details class="grp" data-grp="${key}" ${S.grp[key]?"open":""}><summary><span class="t">${title}</span>${note?`<span class="n">${note}</span>`:""}</summary><div class="body">${body}</div></details>`}
 function imgUrl(x){return x&&/^data:image\//.test(x)?x:""}
 function opts(list,cur,ph,fmt){return (ph?`<option value="">${esc(ph)}</option>`:"")+list.map(v=>`<option value="${esc(v)}" ${String(v)===String(cur)?"selected":""}>${esc(fmt?fmt(v):v)}</option>`).join("")}
-function castCard(m){return `<div class="castcard"><div class="top"><div class="pic" data-castphoto="${esc(m.id)}" title="Upload face photo" ${imgUrl(m.photo)?`style="background-image:url('${imgUrl(m.photo)}');border-style:solid"`:""}>${imgUrl(m.photo)?"":"+ Face<br>photo"}</div>
+function castCard(m){return `<div class="castcard"><div class="top"><div class="pic ${imgUrl(m.photo)?"has":""}" ${imgUrl(m.photo)?`data-view="cast:${esc(m.id)}" title="Click to view full size" style="background-image:url('${imgUrl(m.photo)}');border-style:solid"`:`data-castphoto="${esc(m.id)}" title="Upload face photo"`}>${imgUrl(m.photo)?"":"+ Face<br>photo"}</div>
   <div class="col"><div class="hd"><span class="mno">Model ${m.no}</span><button class="ghost" style="padding:2px 8px" data-delcast="${esc(m.id)}" title="Remove model">×</button></div>
   <input data-castf="name" data-cid="${esc(m.id)}" value="${esc(m.name)}" placeholder="Name, e.g. Priya">
   ${S.sample&&imgUrl(m.photo)?`<button data-castdesc="${esc(m.id)}" ${S.busy["d"+m.id]?"disabled":""}>${S.busy["d"+m.id]?'<span class="spin"></span>Reading photo…':"✦ Describe look"+estLabel("desc",6800)}</button>`:""}</div></div>
@@ -765,8 +782,8 @@ function renderBrief(){
   <div class="lbl">Brief / script</div><textarea data-p="brief" rows="7" placeholder="Paste the brief, script or call notes">${esc(p.brief)}</textarea>
   ${S.sample?`<button class="primary" style="width:100%;margin-top:8px" data-act="break" ${S.busy.brk||overBudget()?"disabled":""}>${S.busy.brk?'<span class="spin"></span>Breaking into shots…':"✦ Break brief into shots"+estLabel("brk",(p.brief||"").length+2500)}</button><p class="hint">Adds shots after the last one. Nothing is overwritten.</p>`:`<p class="hint">Claude features are off in this view, so add shots by hand or paste a PRISM script.</p>`}`;
   const cast=`${S.cast.map(castCard).join("")}<div class="row"><button data-act="addcast">+ Add model</button></div>${S.cast.length?`<p class="hint">Tag who's in each shot in its Continuity section. Check the contracts cover AI likeness.</p>`:`<p class="hint">Add each model or influencer with a face photo, dress and hair so every frame keeps them consistent.</p>`}`;
-  const prods=`${S.products.length?`<div class="pgrid">${S.products.map(pr=>`<div class="pcell"><div class="pimg" style="background-image:url('${imgUrl(pr.photo)}')"></div><span class="pno">Prd ${pr.no}</span><button class="pdel" data-delprod="${esc(pr.id)}" title="Remove">×</button><input data-prod="${esc(pr.id)}" value="${esc(pr.name)}" placeholder="Name"></div>`).join("")}</div>`:`<p class="hint">Upload the exact pieces the film must show.</p>`}<div class="row"><button data-act="addprod">+ Upload product photos</button></div>`;
-  const locs=`${S.locs.length?`<div class="pgrid">${S.locs.map(l=>`<div class="pcell wide"><div class="pimg" style="background-image:url('${imgUrl(l.photo)}')"></div><span class="lno">Loc ${l.no}</span><button class="pdel" data-delloc="${esc(l.id)}" title="Remove">×</button><input data-locn="${esc(l.id)}" value="${esc(l.name)}" placeholder="e.g. Living room"></div>`).join("")}</div>`:""}
+  const prods=`${S.products.length?`<div class="pgrid">${S.products.map(pr=>`<div class="pcell"><div class="pimg" data-view="prod:${esc(pr.id)}" title="Click to view full size" style="background-image:url('${imgUrl(pr.photo)}')"></div><span class="pno">Prd ${pr.no}</span><button class="pdel" data-delprod="${esc(pr.id)}" title="Remove">×</button><input data-prod="${esc(pr.id)}" value="${esc(pr.name)}" placeholder="Name"></div>`).join("")}</div>`:`<p class="hint">Upload the exact pieces the film must show.</p>`}<div class="row"><button data-act="addprod">+ Upload product photos</button></div>`;
+  const locs=`${S.locs.length?`<div class="pgrid">${S.locs.map(l=>`<div class="pcell wide"><div class="pimg" data-view="loc:${esc(l.id)}" title="Click to view full size" style="background-image:url('${imgUrl(l.photo)}')"></div><span class="lno">Loc ${l.no}</span><button class="pdel" data-delloc="${esc(l.id)}" title="Remove">×</button><input data-locn="${esc(l.id)}" value="${esc(l.name)}" placeholder="e.g. Living room"></div>`).join("")}</div>`:""}
   <div class="drop" id="recceDrop" data-act="addloc"><b>Drop location photos here</b><br>or click to upload. Tag each shot with its location so frames match the real space.</div>`;
   const look=`<div class="lbl">Set dressing</div><input data-p="setLoc" value="${esc(p.setLoc)}" placeholder="e.g. brass lamps, marigold garlands, cream drapes">
   <div class="lbl">Time &amp; light</div><select data-p="tod">${opts(TODS,p.tod,"Choose")}</select>
@@ -807,6 +824,51 @@ function overlaySVG(s){
   }
   return `<svg class="ov" viewBox="0 0 100 100" preserveAspectRatio="none">${g}</svg>`;
 }
+// ---------- Lightbox: click any uploaded image to check it full size
+const LB={open:false,group:"",i:0,zoom:false,sure:false};
+function lbItems(g){
+  if(g==="cast")return S.cast.filter(m=>imgUrl(m.photo)).map(m=>({id:m.id,src:m.photo,title:mLabel(m),sub:"Face photo"}));
+  if(g==="prod")return S.products.filter(p=>imgUrl(p.photo)).map(p=>({id:p.id,src:p.photo,title:`Prd ${p.no}${p.name?" · "+p.name:""}`,sub:"Product photo"}));
+  if(g==="loc")return S.locs.filter(l=>imgUrl(l.photo)).map(l=>({id:l.id,src:l.photo,title:`Loc ${l.no}${l.name?" · "+l.name:""}`,sub:"Location photo"}));
+  if(g==="frame")return S.shots.filter(x=>frameSrc(x)).map(x=>({id:x.id,src:frameSrc(x),title:`Shot ${S.shots.indexOf(x)+1} · ${x.size} · ${x.angle}`,sub:(x.image?"Frame":"Pencil sketch")+(x.action?" — "+x.action:"")}));
+  return[]}
+function openLB(key){const k=key.indexOf(":");const g=key.slice(0,k),id=key.slice(k+1);const it=lbItems(g);const i=it.findIndex(x=>x.id===id);if(i<0)return;
+  Object.assign(LB,{open:true,group:g,i,zoom:false,sure:false,ret:document.activeElement});renderLB();const c=$("#lb [data-lb=close]");if(c)c.focus()}
+function closeLB(){LB.open=false;$("#lb").classList.add("hidden");$("#lb").innerHTML="";if(LB.ret&&LB.ret.focus)try{LB.ret.focus()}catch(e){}}
+function renderLB(){const el=$("#lb");const it=lbItems(LB.group);if(!it.length){closeLB();return}LB.i=Math.max(0,Math.min(LB.i,it.length-1));const x=it[LB.i];
+  const kb=Math.round(x.src.length*0.75/1024);
+  el.innerHTML=`<div class="lbtop"><b>${esc(x.title)}</b><span class="muted" id="lbDim">${esc(x.sub.length>90?x.sub.slice(0,90)+"…":x.sub)} · ${LB.i+1} / ${it.length} · ${kb} KB</span><span class="sp"></span>
+   <button data-lb="zoom">${LB.zoom?"Fit to screen":"Actual size"}</button><button data-lb="replace">Replace</button>
+   <button class="ghost danger" data-lb="remove">${LB.sure?"Click again to remove":"Remove"}</button><button class="primary" data-lb="close" aria-label="Close viewer">✕ Close</button></div>
+  <div class="stage ${LB.zoom?"zoom":""}"><img src="${x.src}" alt="${esc(x.title)}" data-lb="zoom"></div>
+  <button class="nav l" data-lb="prev" aria-label="Previous" ${LB.i?"":"disabled"}>‹</button><button class="nav r" data-lb="next" aria-label="Next" ${LB.i<it.length-1?"":"disabled"}>›</button>
+  ${it.length>1?`<div class="strip">${it.map((y,j)=>`<i class="${j===LB.i?"on":""}" data-lbj="${j}" title="${esc(y.title)}" style="background-image:url('${y.src}')"></i>`).join("")}</div>`:""}`;
+  el.classList.remove("hidden");
+  const im=el.querySelector(".stage img");im.onload=()=>{const d=$("#lbDim");if(d)d.textContent+=` · ${im.naturalWidth}×${im.naturalHeight}px`}}
+function lbRemove(){const it=lbItems(LB.group)[LB.i];if(!it)return;if(!LB.sure){LB.sure=true;renderLB();return}LB.sure=false;const id=it.id;
+  if(LB.group==="cast"){const m=castById(id);if(m){m.photo="";Store.putCast(S.pid,id,strip(m))}}
+  else if(LB.group==="prod"){S.products=S.products.filter(x=>x.id!==id);Store.delProduct(S.pid,id)}
+  else if(LB.group==="loc"){S.locs=S.locs.filter(x=>x.id!==id);Store.delLoc(S.pid,id)}
+  else if(LB.group==="frame"){const sh=S.shots.find(x=>x.id===id);if(sh)saveShot(Object.assign({},sh,{image:"",sketch:""}),0)}
+  renderProject();if(lbItems(LB.group).length)renderLB();else closeLB();toast("Removed")}
+async function replaceImg(tgt,file){const k=tgt.indexOf(":");const g=tgt.slice(0,k),id=tgt.slice(k+1);
+  if(!/^image\//.test(file.type)){toast("Pick an image file.");return}
+  let d;try{d=await resizeImage(file)}catch(e){toast("Couldn't use that image.");return}
+  if(g==="cast"){const m=castById(id);if(m){m.photo=d;await Store.putCast(S.pid,id,strip(m))}}
+  else if(g==="prod"){const p=prodById(id);if(p){p.photo=d;await Store.putProduct(S.pid,id,p)}}
+  else if(g==="loc"){const l=locById(id);if(l){l.photo=d;await Store.putLoc(S.pid,id,l)}}
+  else if(g==="frame"){const sh=S.shots.find(x=>x.id===id);if(sh)saveShot(Object.assign({},sh,{image:d,sketch:""}),0)}
+  renderProject();if(LB.open)renderLB();toast("Image replaced")}
+document.addEventListener("click",e=>{const v=e.target.closest("[data-view]");if(v&&!LB.open){e.preventDefault();e.stopPropagation();openLB(v.dataset.view)}},true);
+$("#lb").addEventListener("click",e=>{const j=e.target.closest("[data-lbj]");if(j){LB.i=+j.dataset.lbj;LB.zoom=false;LB.sure=false;renderLB();return}
+  const b=e.target.closest("[data-lb]");if(!b){if(e.target.classList.contains("stage"))closeLB();return}
+  const a=b.dataset.lb;if(a==="close")closeLB();else if(a==="prev"){LB.i--;LB.zoom=false;LB.sure=false;renderLB()}else if(a==="next"){LB.i++;LB.zoom=false;LB.sure=false;renderLB()}
+  else if(a==="zoom"){LB.zoom=!LB.zoom;renderLB()}else if(a==="remove")lbRemove()
+  else if(a==="replace"){const it=lbItems(LB.group)[LB.i];if(!it)return;S.fileTarget="re:"+LB.group+":"+it.id;$("#fileInput").multiple=false;$("#fileInput").click()}});
+document.addEventListener("keydown",e=>{if(!LB.open)return;e.stopImmediatePropagation();
+  if(e.key==="Escape")closeLB();else if(e.key==="ArrowRight"&&LB.i<lbItems(LB.group).length-1){LB.i++;LB.zoom=false;renderLB()}else if(e.key==="ArrowLeft"&&LB.i>0){LB.i--;LB.zoom=false;renderLB()}
+  else if(e.key==="Tab"){const f=[...$("#lb").querySelectorAll("button:not([disabled])")];if(!f.length)return;const k=f.indexOf(document.activeElement);e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus()}},true);
+
 function renderViewer(){
   const v=$("#viewer");const [W,H]=arOf(S.project);
   v.style.setProperty("--ar",W/H);v.style.setProperty("--arr",W+" / "+H);
@@ -816,7 +878,7 @@ function renderViewer(){
     $("#vnav").innerHTML="";return;
   }
   const i=S.shots.indexOf(s);const src=frameSrc(s);
-  v.innerHTML=`${src?`<img class="frame" alt="Shot ${i+1} frame" src="${src}">`:`<div class="ph"><b>${esc(s.size)} · ${esc(s.angle)}</b><span>${S.sample?"Generate a frame, then paste (Ctrl/Cmd+V) or drop it here.":"Generate a frame, then paste (Ctrl/Cmd+V) or drop it here."}</span></div>`}
+  v.innerHTML=`${src?`<img class="frame" alt="Shot ${i+1} frame" src="${src}" data-view="frame:${esc(s.id)}" title="Click to view full size">`:`<div class="ph"><b>${esc(s.size)} · ${esc(s.angle)}</b><span>${S.sample?"Generate a frame, then paste (Ctrl/Cmd+V) or drop it here.":"Generate a frame, then paste (Ctrl/Cmd+V) or drop it here."}</span></div>`}
   ${overlaySVG(s)}
   <span class="vb tl">${i+1} · ${esc(s.size)} · ${esc(s.angle)}</span>
   <span class="vb tr">${ICON[s.move]||""} ${esc(s.move)} · ${s.lens}mm · ${s.duration}s</span>
@@ -853,7 +915,7 @@ function renderInspector(force){
   <div class="lbl">Continuity note</div><input data-s="cont" value="${esc(s.cont)}" placeholder="e.g. Model 2 walks in from the left; picks up the diya from shot ${i}">`;
   const frame=`<div class="row" style="margin-top:4px">${genOf()==="gemini"?`<button class="primary" data-copygem="${esc(s.id)}" style="flex:1">✦ Copy frame ${shotNo(s)} prompt for Gemini</button>`:`<a class="btnlink primary" href="${esc(genLink(s))}" target="_blank" rel="noopener" data-gen="${esc(s.id)}">✦ Generate in ${esc(GENS[genOf()].short)} ↗</a>`}</div>
   <p class="hint">${genOf()==="gemini"?"Paste it into this film's Gemini chat (start one from ✦ Generate frames), then paste Gemini's image here with Ctrl/Cmd+V.":genOf()==="pollinations"?"Opens the frame in a new tab. Copy the image, click the frame here and press Ctrl/Cmd+V.":`Copies the prompt and opens ${esc(GENS[genOf()].short)}. Paste the result back here.`}</p>
-  <div class="row">${S.sample?`<button data-act="sketch" ${busy||overBudget()?"disabled":""}>${busy?'<span class="spin"></span>Sketching…':(s.sketch?"Re-sketch":"Pencil sketch")+estLabel("sketch",2000)}</button>`:""}<button data-act="upload">Upload image</button>${frameSrc(s)?`<button class="ghost" data-act="clearframe">Remove</button>`:""}</div>
+  <div class="row">${S.sample?`<button data-act="sketch" ${busy||overBudget()?"disabled":""}>${busy?'<span class="spin"></span>Sketching…':(s.sketch?"Re-sketch":"Pencil sketch")+estLabel("sketch",2000)}</button>`:""}<button data-act="upload">Upload image</button>${frameSrc(s)?`<button data-view="frame:${esc(s.id)}">⤢ View full size</button><button class="ghost" data-act="clearframe">Remove</button>`:""}</div>
   ${s.canvaUrl&&/^https:\/\/([a-z0-9-]+\.)*canva\.com\//i.test(s.canvaUrl)?`<p style="margin:10px 0 0"><a class="lnk" href="${esc(s.canvaUrl)}" target="_blank" rel="noopener">Open Canva frame ↗</a></p>`:""}`;
   const prompts=`<div class="lbl">Image prompt</div><pre class="prompt">${esc(framePrompt(s))}</pre><div class="row"><button data-act="copyimg">Copy image prompt</button></div>
   <div class="lbl">Video prompt <span>Flow / Veo, after approval</span></div><pre class="prompt" id="promptBox">${esc(videoPrompt(s))}</pre><div class="row"><button data-act="copyprompt">Copy video prompt</button></div>`;
@@ -970,7 +1032,7 @@ document.addEventListener("paste",e=>{
   if(!S.pid||P)return;const t=e.target;if((t.tagName==="TEXTAREA"||t.tagName==="INPUT")&&!S.pasteTarget)return;
   const items=(e.clipboardData&&e.clipboardData.items)||[];for(const it of items){if(it.type&&it.type.startsWith("image/")){const f=it.getAsFile();if(f){e.preventDefault();const reopen=!$("#modal").classList.contains("hidden");if(S.pasteTarget){S.sel=S.pasteTarget;S.pasteTarget=null;closeModal()}setImage(f).then(()=>advance(reopen));return}}}
 });
-$("#fileInput").addEventListener("change",e=>{const fl=Array.from(e.target.files||[]);const f=fl[0];e.target.value="";const tgt=S.fileTarget;S.fileTarget=null;e.target.multiple=false;if(!f)return;if(tgt&&tgt.startsWith("cast:")){setCastPhoto(tgt.slice(5),f);return}if(tgt==="prod"){addProducts(fl);return}if(tgt==="loc"){addLocs(fl);return}if(tgt==="infl")setInfl(f);else setImage(f)});
+$("#fileInput").addEventListener("change",e=>{const fl=Array.from(e.target.files||[]);const f=fl[0];e.target.value="";const tgt=S.fileTarget;S.fileTarget=null;e.target.multiple=false;if(!f)return;if(tgt&&tgt.startsWith("re:")){replaceImg(tgt.slice(3),f);return}if(tgt&&tgt.startsWith("cast:")){setCastPhoto(tgt.slice(5),f);return}if(tgt==="prod"){addProducts(fl);return}if(tgt==="loc"){addLocs(fl);return}if(tgt==="infl")setInfl(f);else setImage(f)});
 async function addLocs(files){let no=S.locs.reduce((m,x)=>Math.max(m,x.no||0),0);let n=0;
   for(const file of files.slice(0,12)){if(!/^image\//.test(file.type))continue;try{const d=await resizeImage(file);no+=1;const id=uid();const l={no,name:file.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").replace(/^(img|dsc|pxl)\s*\d+.*$/i,"").slice(0,40),photo:d,createdAt:Date.now()};S.locs.push(Object.assign({id},l));await Store.putLoc(S.pid,id,l);n++}catch(e){}}
   renderBrief();renderInspector();renderSB();toast(n?`${n} location photo${n>1?"s":""} added. Name them, then tag each shot's location.`:"Couldn't use those images.")}
