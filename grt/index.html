@@ -53,7 +53,15 @@ input[type=range]{padding:0;accent-color:var(--acc)}
 .pmeta span{color:var(--muted);font-size:12px}
 .empty{border:1px dashed var(--line);border-radius:12px;padding:40px;text-align:center;color:var(--muted)}
 /* project */
-.project{flex:1;display:grid;grid-template-columns:290px minmax(0,1fr) 330px;grid-template-rows:minmax(0,1fr) 196px auto;min-height:0}
+.project{--lw:290px;--rw:330px;--sbh:196px;flex:1;display:grid;grid-template-columns:var(--lw) minmax(0,1fr) var(--rw);grid-template-rows:minmax(0,1fr) var(--sbh) auto;min-height:0}
+.project>.brief{grid-column:1;grid-row:1}.project>.stage{grid-column:2;grid-row:1}.project>.inspector{grid-column:3;grid-row:1}.project>.sb{grid-row:2}.project>.meter{grid-row:3}
+.rz{z-index:6;position:relative;background:transparent;border:0;padding:0;border-radius:0;transition:background .12s}
+.rz:hover,.rz:focus-visible,.rz.on{background:var(--gold);outline:none}
+.rz.l,.rz.r{grid-row:1;width:7px;cursor:col-resize;align-self:stretch}
+.rz.l{grid-column:1;justify-self:end;margin-right:-4px}.rz.r{grid-column:3;justify-self:start;margin-left:-4px}
+.rz.b{grid-row:2;grid-column:1/-1;height:7px;align-self:start;margin-top:-4px;cursor:row-resize}
+body.resizing{user-select:none}body.resizing.col{cursor:col-resize}body.resizing.row{cursor:row-resize}
+body.resizing iframe,body.resizing .viewer{pointer-events:none}
 .meter{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:7px 16px;border-top:1px solid var(--line);background:#120a0b;font:11.5px var(--mono);color:var(--muted)}
 .meter .bar{width:140px;height:6px;border-radius:3px;background:#2f1c1e;overflow:hidden}
 .meter .bar i{display:block;height:100%;background:var(--gold)}
@@ -117,10 +125,13 @@ pre.prompt{white-space:pre-wrap;font:12px/1.5 var(--mono);background:#0f1114;bor
 .grp>.body{padding:0 0 12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid2 .lbl{margin-top:8px}
 .castcard{border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:8px;background:#1f1314}
-.castcard .top{display:flex;gap:8px;align-items:flex-start}
+.castcard .ctop{display:flex;gap:8px;align-items:flex-start}
 .castcard .pic{width:64px;height:80px;flex:none;border-radius:8px;border:1px dashed var(--line);background:#1b1112 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--muted);text-align:center;cursor:pointer}
 .castcard .mno{font:600 10px var(--mono);background:#8fa6d8;color:#1b1112;border-radius:3px;padding:0 5px}
-.castcard .col{flex:1;display:flex;flex-direction:column;gap:6px}
+.castcard .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.castcard .col button{white-space:normal;text-align:left;line-height:1.3}
+.grid2>*{min-width:0}
+.castcard,.pcell{min-width:0}
 .castcard .hd{display:flex;justify-content:space-between;align-items:center}
 .drop{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px;cursor:pointer;margin-top:8px;transition:.15s}
 .drop:hover,.drop.over{border-color:var(--gold);color:var(--text);background:#2a1b1c}
@@ -180,8 +191,8 @@ a.lnk{color:var(--gold)}
 .toast.show{opacity:1;transform:translateX(-50%)}
 .spin{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media (max-width:1050px){.project{grid-template-columns:240px minmax(0,1fr) 290px}}
-@media (max-width:820px){.project{display:flex;flex-direction:column;overflow:auto}.brief,.inspector{border:0;overflow:visible}.stage{min-height:60vh}.sb{min-height:200px}}
+@media (max-width:820px){.rz{display:none}}
+@media (max-width:820px){.project>*{grid-column:auto;grid-row:auto}.project{display:flex;flex-direction:column;overflow:auto}.brief,.inspector{border:0;overflow:visible}.stage{min-height:60vh}.sb{min-height:200px}}
 </style>
 </head>
 <body>
@@ -201,6 +212,9 @@ a.lnk{color:var(--gold)}
     </section>
     <aside class="inspector" id="inspector"></aside>
     <footer class="sb" id="sb"></footer>
+    <button class="rz l" data-rz="lw" aria-label="Resize left panel (drag, or use arrow keys; double-click to reset)" title="Drag to resize · double-click to reset"></button>
+    <button class="rz r" data-rz="rw" aria-label="Resize right panel (drag, or use arrow keys; double-click to reset)" title="Drag to resize · double-click to reset"></button>
+    <button class="rz b" data-rz="sbh" aria-label="Resize Scenebuilder height (drag, or use arrow keys; double-click to reset)" title="Drag to resize · double-click to reset"></button>
     <div class="meter" id="meter"></div>
   </main>
 </div>
@@ -763,7 +777,7 @@ function renderTop(){
 function grp(key,title,note,body){return `<details class="grp" data-grp="${key}" ${S.grp[key]?"open":""}><summary><span class="t">${title}</span>${note?`<span class="n">${note}</span>`:""}</summary><div class="body">${body}</div></details>`}
 function imgUrl(x){return x&&/^data:image\//.test(x)?x:""}
 function opts(list,cur,ph,fmt){return (ph?`<option value="">${esc(ph)}</option>`:"")+list.map(v=>`<option value="${esc(v)}" ${String(v)===String(cur)?"selected":""}>${esc(fmt?fmt(v):v)}</option>`).join("")}
-function castCard(m){return `<div class="castcard"><div class="top"><div class="pic ${imgUrl(m.photo)?"has":""}" ${imgUrl(m.photo)?`data-view="cast:${esc(m.id)}" title="Click to view full size" style="background-image:url('${imgUrl(m.photo)}');border-style:solid"`:`data-castphoto="${esc(m.id)}" title="Upload face photo"`}>${imgUrl(m.photo)?"":"+ Face<br>photo"}</div>
+function castCard(m){return `<div class="castcard"><div class="ctop"><div class="pic ${imgUrl(m.photo)?"has":""}" ${imgUrl(m.photo)?`data-view="cast:${esc(m.id)}" title="Click to view full size" style="background-image:url('${imgUrl(m.photo)}');border-style:solid"`:`data-castphoto="${esc(m.id)}" title="Upload face photo"`}>${imgUrl(m.photo)?"":"+ Face<br>photo"}</div>
   <div class="col"><div class="hd"><span class="mno">Model ${m.no}</span><button class="ghost" style="padding:2px 8px" data-delcast="${esc(m.id)}" title="Remove model">×</button></div>
   <input data-castf="name" data-cid="${esc(m.id)}" value="${esc(m.name)}" placeholder="Name, e.g. Priya">
   ${S.sample&&imgUrl(m.photo)?`<button data-castdesc="${esc(m.id)}" ${S.busy["d"+m.id]?"disabled":""}>${S.busy["d"+m.id]?'<span class="spin"></span>Reading photo…':"✦ Describe look"+estLabel("desc",6800)}</button>`:""}</div></div>
@@ -868,6 +882,25 @@ $("#lb").addEventListener("click",e=>{const j=e.target.closest("[data-lbj]");if(
 document.addEventListener("keydown",e=>{if(!LB.open)return;e.stopImmediatePropagation();
   if(e.key==="Escape")closeLB();else if(e.key==="ArrowRight"&&LB.i<lbItems(LB.group).length-1){LB.i++;LB.zoom=false;renderLB()}else if(e.key==="ArrowLeft"&&LB.i>0){LB.i--;LB.zoom=false;renderLB()}
   else if(e.key==="Tab"){const f=[...$("#lb").querySelectorAll("button:not([disabled])")];if(!f.length)return;const k=f.indexOf(document.activeElement);e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus()}},true);
+
+// ---------- Resizable panels (saved per browser)
+const LAYOUT_KEY="storyroom-layout";const LAYOUT_DEF={lw:290,rw:330,sbh:196};
+function layoutLimits(k){const W=innerWidth,H=innerHeight;return k==="sbh"?[120,Math.max(140,H-320)]:[220,Math.max(240,Math.floor(W*0.42))]}
+function getLayout(){let o={};try{o=JSON.parse(localStorage.getItem(LAYOUT_KEY))||{}}catch(e){}return Object.assign({},LAYOUT_DEF,o)}
+function applyLayout(o,save){const p=$("#project");for(const k of Object.keys(LAYOUT_DEF)){const [a,b]=layoutLimits(k);o[k]=Math.round(Math.max(a,Math.min(b,+o[k]||LAYOUT_DEF[k])));p.style.setProperty("--"+k,o[k]+"px")}
+  if(save)try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(o))}catch(e){}if(S.pid)renderViewer()}
+let LAY=getLayout();
+(function initResize(){const p=$("#project");applyLayout(LAY);
+  p.addEventListener("pointerdown",e=>{const h=e.target.closest(".rz");if(!h)return;e.preventDefault();const k=h.dataset.rz;const x0=e.clientX,y0=e.clientY,v0=LAY[k];
+    h.setPointerCapture(e.pointerId);h.classList.add("on");document.body.classList.add("resizing",k==="sbh"?"row":"col");
+    const mv=ev=>{const d=k==="lw"?ev.clientX-x0:k==="rw"?x0-ev.clientX:y0-ev.clientY;LAY[k]=v0+d;applyLayout(LAY)};
+    const up=()=>{h.classList.remove("on");document.body.classList.remove("resizing","row","col");h.removeEventListener("pointermove",mv);h.removeEventListener("pointerup",up);h.removeEventListener("pointercancel",up);applyLayout(LAY,true)};
+    h.addEventListener("pointermove",mv);h.addEventListener("pointerup",up);h.addEventListener("pointercancel",up)});
+  p.addEventListener("dblclick",e=>{const h=e.target.closest(".rz");if(!h)return;LAY[h.dataset.rz]=LAYOUT_DEF[h.dataset.rz];applyLayout(LAY,true);toast("Panel size reset")});
+  p.addEventListener("keydown",e=>{const h=e.target.closest(".rz");if(!h)return;const k=h.dataset.rz;const step=e.shiftKey?60:20;
+    const dir=k==="lw"?{ArrowRight:1,ArrowLeft:-1}:k==="rw"?{ArrowLeft:1,ArrowRight:-1}:{ArrowUp:1,ArrowDown:-1};
+    if(dir[e.key]){e.preventDefault();e.stopPropagation();LAY[k]+=dir[e.key]*step;applyLayout(LAY,true)}else if(e.key==="Home"){e.preventDefault();LAY[k]=LAYOUT_DEF[k];applyLayout(LAY,true)}});
+  let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>applyLayout(LAY),150)})})();
 
 function renderViewer(){
   const v=$("#viewer");const [W,H]=arOf(S.project);
